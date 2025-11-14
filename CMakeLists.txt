@@ -2,12 +2,19 @@ cmake_minimum_required(VERSION 3.28)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:>DLL")
 set(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Debug;Release;")
 
+
 #if (CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_SOURCE_DIR)
 project(openFrameworks)
 #endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(OF_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+#set(VCPKG_ROOT ${OF_DIRECTORY}/thirdParty/vcpkg)
+#set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+#message(STATUS "------------------------\n${CMAKE_TOOLCHAIN_FILE}")
+
+
 include(of_macros)
 
 # --------------------------------------------------
@@ -116,63 +123,151 @@ install(DIRECTORY libs/openFrameworks
         DESTINATION include
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl"
 )
+find_package(PkgConfig REQUIRED)
+
+find_package(fmt CONFIG REQUIRED)
+find_package(unofficial-brotli CONFIG REQUIRED)
+
+pkg_check_modules(CAIRO REQUIRED cairo)
+add_library(Cairo::Cairo INTERFACE IMPORTED)
+target_include_directories(Cairo::Cairo INTERFACE
+        "${CAIRO_INCLUDEDIR}"
+)
+target_link_libraries(Cairo::Cairo INTERFACE
+        ${CAIRO_LIBRARIES}
+)
+
+#target_include_directories(of_static PUBLIC ${cairo_INCLUDE_DIRS})
+
+#target_include_directories(of_static PUBLIC ${cairo_INCLUDE_DIRS})
+find_package(ZLIB REQUIRED)
+find_package(PNG REQUIRED)
+find_package(Freetype REQUIRED)
+
+pkg_check_modules(PIXMAN REQUIRED pixman-1)
+add_library(Pixman::Pixman INTERFACE IMPORTED)
+target_include_directories(Pixman::Pixman INTERFACE
+        "${PIXMAN_INCLUDEDIR}"
+)
+target_link_libraries(Pixman::Pixman INTERFACE
+        ${PIXMAN_LIBRARIES}
+)
+
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
+find_package(freeimage CONFIG REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(unofficial-libtess2 CONFIG REQUIRED)
+
+pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+add_library(libusb::libusb INTERFACE IMPORTED)
+target_include_directories(libusb::libusb INTERFACE
+        "${LIBUSB_INCLUDEDIR}"
+)
+target_link_libraries(libusb::libusb INTERFACE
+        ${LIBUSB_LIBRARIES}
+)
+
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+find_package(RtAudio CONFIG REQUIRED)
+find_package(uriparser CONFIG REQUIRED char wchar_t)
+find_package(utf8cpp CONFIG REQUIRED)
+
+## Propagate include dirs for pkg-config-only deps
+#if (cairo_FOUND)
+#    target_include_directories(of_static PUBLIC ${cairo_INCLUDE_DIRS})
+#endif()
+#if (libusb_FOUND)
+#    target_include_directories(of_static PUBLIC ${libusb_INCLUDE_DIRS})
+#endif()
+
+# Optional: propagate other CFLAGS from pkg-config if needed
+target_compile_options(of_static PUBLIC ${cairo_CFLAGS_OTHER} ${libusb_CFLAGS_OTHER})
+
+target_link_libraries(of_static PUBLIC unofficial::brotli::brotlidec)
+target_link_libraries(of_static PUBLIC unofficial::brotli::brotlienc)
+target_link_libraries(of_static PUBLIC Cairo::Cairo)
+target_link_libraries(of_static PUBLIC ZLIB::ZLIB)
+target_link_libraries(of_static PUBLIC PNG::PNG)
+target_link_libraries(of_static PUBLIC Freetype::Freetype)
+target_link_libraries(of_static PUBLIC Pixman::Pixman)
+target_link_libraries(of_static PUBLIC OpenSSL::SSL)
+target_link_libraries(of_static PUBLIC OpenSSL::Crypto)
+target_link_libraries(of_static PUBLIC CURL::libcurl_static)
+target_link_libraries(of_static PUBLIC fmt::fmt)
+target_link_libraries(of_static PUBLIC freeimage::FreeImage)
+target_link_libraries(of_static PUBLIC GLEW::glew_s)
+target_link_libraries(of_static PUBLIC glfw)
+target_link_libraries(of_static PUBLIC glm::glm-header-only)
+target_link_libraries(of_static PUBLIC unofficial::libtess2::libtess2)
+target_link_libraries(of_static PUBLIC libusb::libusb)
+target_link_libraries(of_static PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(of_static PUBLIC pugixml::static pugixml::pugixml)
+target_link_libraries(of_static PUBLIC RtAudio::rtaudio)
+target_link_libraries(of_static PUBLIC uriparser::uriparser)
+target_link_libraries(of_static PUBLIC utf8::cpp utf8cpp::utf8cpp)
+
+
 
 # Install 3rd-party headers
 set(OF_LIB_NAMES
-        brotli
-        cairo
-        curl
-        fmt
-        FreeImage
-        freetype
-        glew
-        glfw
-        glm
-        json
-        libpng
-        libusb
-        openssl
-        pixman
-        pugixml
-        rtAudio
-        tess2
-        uriparser
-        utf8
-        zlib
+#        brotli
+#        cairo
+#        curl
+#        fmt
+#        FreeImage
+#        freetype
+#        glew
+#        glfw
+#        glm
+#        json
+#        libpng
+#        libusb
+#        openssl
+#        pixman
+#        pugixml
+#        rtAudio
+#        tess2
+#        uriparser
+#        utf8
+#        zlib
 )
 
 if (OF_TARGET_VS)
     list(APPEND OF_LIB_NAMES videoInput)
 endif ()
 
-foreach (item ${OF_LIB_NAMES})
-    #    message("ITEM:::::: ${item}")
-    install(DIRECTORY libs/${item}/include
-            DESTINATION include
-            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl")
-endforeach ()
+#foreach (item ${OF_LIB_NAMES})
+#    #    message("ITEM:::::: ${item}")
+#    install(DIRECTORY libs/${item}/include
+#            DESTINATION include
+#            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl")
+#endforeach ()
 
-foreach (item ${OF_LIB_NAMES})
-    set(WIN_ARCH "x64") # hardcoded for now
-
-    if (OF_TARGET_VS)
-        install(DIRECTORY libs/${item}/lib/vs/${WIN_ARCH}/
-                DESTINATION lib
-                FILES_MATCHING PATTERN "*.lib")
-    elseif (OF_TARGET_MACOS)
-        install(DIRECTORY libs/${item}/lib/macos/
-                DESTINATION lib
-                FILES_MATCHING PATTERN "*.a" PATTERN "*.dylib")
-        set(XCF_PATH "${OF_DIRECTORY}/libs/${item}/lib/macos/${item}.xcframework")
-        if (EXISTS ${XCF_PATH})
-            install(DIRECTORY ${XCF_PATH} DESTINATION lib)
-        endif ()
-    elseif (OF_TARGET_LINUX)
-        install(DIRECTORY libs/${dir}/lib/linux/
-                DESTINATION lib
-                FILES_MATCHING PATTERN "*.a" PATTERN "*.so")
-    endif ()
-endforeach ()
+#foreach (item ${OF_LIB_NAMES})
+#    set(WIN_ARCH "x64") # hardcoded for now
+#
+#    if (OF_TARGET_VS)
+#        install(DIRECTORY libs/${item}/lib/vs/${WIN_ARCH}/
+#                DESTINATION lib
+#                FILES_MATCHING PATTERN "*.lib")
+#    elseif (OF_TARGET_MACOS)
+#        install(DIRECTORY libs/${item}/lib/macos/
+#                DESTINATION lib
+#                FILES_MATCHING PATTERN "*.a" PATTERN "*.dylib")
+#        set(XCF_PATH "${OF_DIRECTORY}/libs/${item}/lib/macos/${item}.xcframework")
+#        if (EXISTS ${XCF_PATH})
+#            install(DIRECTORY ${XCF_PATH} DESTINATION lib)
+#        endif ()
+#    elseif (OF_TARGET_LINUX)
+#        install(DIRECTORY libs/${dir}/lib/linux/
+#                DESTINATION lib
+#                FILES_MATCHING PATTERN "*.a" PATTERN "*.so")
+#    endif ()
+#endforeach ()
 
 add_custom_target(build_and_install
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
@@ -186,15 +281,22 @@ install(EXPORT openFrameworksTargets
         DESTINATION lib/cmake/openFrameworks
 )
 
-# Generate the config file
+# Generate the config and version files for find_package
 configure_package_config_file(
         ${CMAKE_CURRENT_LIST_DIR}/cmake/openFrameworksConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfig.cmake
         INSTALL_DESTINATION lib/cmake/openFrameworks
 )
 
+write_basic_package_version_file(
+        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfigVersion.cmake
+        VERSION 0.1.0
+        COMPATIBILITY SameMajorVersion
+)
+
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfigVersion.cmake
         DESTINATION lib/cmake/openFrameworks
 )
 
@@ -246,51 +348,25 @@ set(OF_HEADERS
         ${OF_DIRECTORY}/libs/openFrameworks/types
         ${OF_DIRECTORY}/libs/openFrameworks/utils
         ${OF_DIRECTORY}/libs/openFrameworks/video
-        ${OF_DIRECTORY}/libs/brotli/include
-        ${OF_DIRECTORY}/libs/cairo/include
-        ${OF_DIRECTORY}/libs/curl/include
-        ${OF_DIRECTORY}/libs/fmt/include
-        ${OF_DIRECTORY}/libs/FreeImage/include
-        ${OF_DIRECTORY}/libs/freetype/include
-        ${OF_DIRECTORY}/libs/FreeImage/include
-        ${OF_DIRECTORY}/libs/glew/include
-        ${OF_DIRECTORY}/libs/glfw/include
-        ${OF_DIRECTORY}/libs/glm/include
-        ${OF_DIRECTORY}/libs/json/include
-        ${OF_DIRECTORY}/libs/libpng/include
-        ${OF_DIRECTORY}/libs/libusb/include
-        ${OF_DIRECTORY}/libs/openssl/include
-        ${OF_DIRECTORY}/libs/pixman/include
-        ${OF_DIRECTORY}/libs/pugixml/include
-        ${OF_DIRECTORY}/libs/rtAudio/include
-        ${OF_DIRECTORY}/libs/tess2/include
-        ${OF_DIRECTORY}/libs/uriparser/include
-        ${OF_DIRECTORY}/libs/utf8/include
-        ${OF_DIRECTORY}/libs/zlib/include
 )
 
-#include_directories(${OF_HEADERS})
-
-target_include_directories(of_static
-        PUBLIC
+# Publish public headers to dependents (build tree and install tree)
+target_include_directories(of_static PUBLIC
         $<BUILD_INTERFACE:${OF_HEADERS}>
-        #        $<INSTALL_INTERFACE:include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/include>
-
+        $<INSTALL_INTERFACE:include>
 )
 # --------------------------------------------------
 # Libraries
 # --------------------------------------------------
 
 if (OF_TARGET_MACOS)
-    foreach (ITEM ${OF_LIB_NAMES})
-        set(XCF_PATH "${OF_DIRECTORY}/libs/${ITEM}/lib/macos/${ITEM}.xcframework")
-        # Some libs are include-only, so check if the xcframework exists
-        if (EXISTS ${XCF_PATH})
-            target_link_libraries(of_static PUBLIC ${XCF_PATH})
-        endif ()
-    endforeach ()
-
+#    foreach (ITEM ${OF_LIB_NAMES})
+#        set(XCF_PATH "${OF_DIRECTORY}/libs/${ITEM}/lib/macos/${ITEM}.xcframework")
+#        # Some libs are include-only, so check if the xcframework exists
+#        if (EXISTS ${XCF_PATH})
+#            target_link_libraries(of_static PUBLIC ${XCF_PATH})
+#        endif ()
+#    endforeach ()
 
     find_library(accelerate_lib Accelerate)
     find_library(iokit_lib IOKit)
@@ -346,7 +422,7 @@ elseif (OF_TARGET_VS)
             brotlienc.lib
             libcairo.lib
             libcurl.lib
-            fmt.lib
+#            fmt.lib
             FreeImage$<$<CONFIG:Debug>:D>.lib
             #            FreeImage.lib
             freetype$<$<CONFIG:Debug>:d>.lib

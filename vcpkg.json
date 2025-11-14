@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "fmt",
+    "brotli",
+    "cairo",
+    "curl",
+    "freeimage",
+    "freetype",
+    "glew",
+    "glfw3",
+    "glm",
+    "nlohmann-json",
+    "libpng",
+    "libusb",
+    "openssl",
+    "pixman",
+    "pugixml",
+    "rtaudio",
+    "libtess2",
+    "uriparser",
+    "utfcpp",
+    "zlib"
+  ],
+  "name": "of2",
+  "version-string": "2"
+}

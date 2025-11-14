@@ -6,6 +6,8 @@ function(ofDetectTarget)
             EMSCRIPTEN
             IOS
             LINUX
+            LINUX_ARM_V6
+            LINUX_ARM_V7
             MACOS
             MSYS2
             OSX
