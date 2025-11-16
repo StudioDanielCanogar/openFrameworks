@@ -2,6 +2,12 @@
 
 //--------------------------------------------------------------
 void ofApp::setup() {
+
+	ofLogNotice() << "Current working directory: " << std::filesystem::current_path();
+	ofLogNotice() << "Data path (relative): " << ofToDataPath("", false);
+	ofLogNotice() << "Data path (absolute): " << ofToDataPath("", true);
+	ofLogNotice() << "Looking for: " << ofToDataPath("linzer.png", true);
+
 	ofSetVerticalSync(true);
 	// load an image from disk
 	img.load("linzer.png");

@@ -1,0 +1,36 @@
+{
+  "name": "openframeworks-modern",
+  "version": "0.1.0",
+  "description": "Modern CMake + vcpkg setup for openFrameworks",
+  "builtin-baseline": "0804e3b55b7e435c593707071052363fa876f170",
+  "dependencies": [
+    "brotli",
+    "bzip2",
+    "cairo",
+    "fmt",
+    "freeimage",
+    "freetype",
+    "glew",
+    "glfw3",
+    "glm",
+    "curl",
+    "libpng",
+    "libtess2",
+    "nlohmann-json",
+    "openssl",
+    "pixman",
+    "pkgconf",
+    "pugixml",
+    "rtaudio",
+    "uriparser",
+    "utfcpp",
+    "videoinput",
+    "zlib"
+  ],
+  "overrides": [
+    {
+      "name": "videoinput",
+      "version": "0.200"
+    }
+  ]
+}

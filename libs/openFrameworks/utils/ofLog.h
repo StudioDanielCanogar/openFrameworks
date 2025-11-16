@@ -4,6 +4,12 @@
 #include "ofFileUtils.h"
 #include <sstream>
 
+// For wchar_t conversion in C++20
+#ifdef _WIN32
+#include <locale>
+#include <codecvt>
+#endif
+
 
 
 /// \brief Convert a variable length argument to a string.
@@ -504,6 +510,34 @@ class ofLog{
 		/// \tparam T the data type to be streamed.
 		/// \param value the data to be streamed.
 		/// \returns A reference to itself.
+		
+		// Specializations for wide character types to handle C++20 deleted operators
+		// In C++20, streaming wchar_t* to std::ostream is deleted
+		// We convert to narrow string to avoid compilation errors
+		#ifdef _WIN32
+		ofLog & operator<<(const wchar_t* value) {
+			if (value) {
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+				try {
+					message << converter.to_bytes(value) << getPadding();
+				} catch (...) {
+					// If conversion fails, output pointer address as fallback
+					message << static_cast<const void*>(value) << getPadding();
+				}
+			}
+			return *this;
+		}
+		
+		ofLog & operator<<(wchar_t* value) {
+			return operator<<(const_cast<const wchar_t*>(value));
+		}
+		
+		ofLog & operator<<(wchar_t value) {
+			wchar_t str[2] = {value, 0};
+			return operator<<(static_cast<const wchar_t*>(str));
+		}
+		#endif
+		
 		template <class T>
 		ofLog & operator<<(const T & value) {
 			message << value << getPadding();

@@ -1,462 +1,344 @@
-cmake_minimum_required(VERSION 3.28)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:>DLL")
-set(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Debug;Release;")
+cmake_minimum_required(VERSION 3.25)
+project(openframeworks VERSION 0.12.0 LANGUAGES C CXX)
 
-#if (CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_SOURCE_DIR)
-project(openFrameworks)
-#endif()
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set(OF_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
-include(of_macros)
-
-# --------------------------------------------------
-# Installation prefix: {OF_DIRECTORY}/install/{platform}
-# --------------------------------------------------
-#ofSetInstallPrefix()
-# --------------------------------------------------
-# Source Files
-# --------------------------------------------------
-
-file(GLOB_RECURSE SRC_3D "${OF_DIRECTORY}/libs/openFrameworks/3d/*.cpp")
-set(SRC_APP
-        ${OF_DIRECTORY}/libs/openFrameworks/app/ofAppGLFWWindow.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/app/ofBaseApp.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/app/ofAppNoWindow.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/app/ofAppRunner.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/app/ofMainLoop.cpp
-)
-file(GLOB_RECURSE SRC_COMMS "${OF_DIRECTORY}/libs/openFrameworks/communication/*.cpp")
-file(GLOB_RECURSE SRC_EVENTS "${OF_DIRECTORY}/libs/openFrameworks/events/*.cpp")
-file(GLOB_RECURSE SRC_GRAPHICS "${OF_DIRECTORY}/libs/openFrameworks/graphics/*.cpp")
-file(GLOB_RECURSE SRC_GL "${OF_DIRECTORY}/libs/openFrameworks/gl/*.cpp")
-file(GLOB_RECURSE SRC_MATH "${OF_DIRECTORY}/libs/openFrameworks/math/*.cpp")
-set(SRC_SOUND
-        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofFmodSoundPlayer.cpp
-#        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofOpenALSoundPlayer.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundBuffer.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundPlayer.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundStream.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundBaseTypes.cpp
-)
-file(GLOB_RECURSE SRC_TYPES "${OF_DIRECTORY}/libs/openFrameworks/types/*.cpp")
-file(GLOB_RECURSE SRC_UTILS "${OF_DIRECTORY}/libs/openFrameworks/utils/*.cpp")
-set(SRC_VIDEO
-        ${OF_DIRECTORY}/libs/openFrameworks/video/ofVideoGrabber.cpp
-        ${OF_DIRECTORY}/libs/openFrameworks/video/ofVideoPlayer.cpp
-)
-
-set(OF_SRC)
-
-list(APPEND OF_SRC
-        ${SRC_3D}
-        ${SRC_APP}
-        ${SRC_COMMS}
-        ${SRC_EVENTS}
-        ${SRC_GRAPHICS}
-        ${SRC_GL}
-        ${SRC_MATH}
-        ${SRC_SOUND}
-        ${SRC_TYPES}
-        ${SRC_UTILS}
-        ${SRC_VIDEO}
-)
-
-# --------------------------------------------------
-# Append platform specific files
-# --------------------------------------------------
-
-if (APPLE)
-    list(APPEND OF_SRC
-            ${OF_DIRECTORY}/libs/openFrameworks/video/ofAVFoundationVideoPlayer.m
-            ${OF_DIRECTORY}/libs/openFrameworks/video/ofAVFoundationPlayer.mm
-            ${OF_DIRECTORY}/libs/openFrameworks/video/ofAVFoundationGrabber.mm
-            ${OF_DIRECTORY}/libs/openFrameworks/sound/ofAVEngineSoundPlayer.h
-            ${OF_DIRECTORY}/libs/openFrameworks/sound/ofAVEngineSoundPlayer.mm
-            ${OF_DIRECTORY}/libs/openFrameworks/sound/ofRtAudioSoundStream.cpp
-
-    )
-elseif (WIN32)
-    list(APPEND OF_SRC
-            ${OF_DIRECTORY}/libs/openFrameworks/video/ofDirectShowGrabber.cpp
-            ${OF_DIRECTORY}/libs/openFrameworks/video/ofDirectShowPlayer.cpp
-            ${OF_DIRECTORY}/libs/openFrameworks/video/ofMediaFoundationPlayer.cpp
-            ${OF_DIRECTORY}/libs/openFrameworks/sound/ofMediaFoundationSoundPlayer.cpp
-            ${OF_DIRECTORY}/libs/openFrameworks/sound/ofRtAudioSoundStream.cpp
-
-    )
-endif ()
-
-#foreach (item IN LISTS OF_SRC)
-#    message(STATUS " - ${item}")
-#endforeach ()
-
-# --------------------------------------------------
-# Target
-# --------------------------------------------------
-
-add_library(of_static STATIC ${OF_SRC})
-
-# --------------------------------------------------
-# Export & Install
-# --------------------------------------------------
-
-include(CMakePackageConfigHelpers)
-
-# Export target for downstream apps
-install(TARGETS of_static
-        EXPORT openFrameworksTargets
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-)
-
-# Install openFrameworks headers
-install(DIRECTORY libs/openFrameworks
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl"
-)
-
-# Install 3rd-party headers
-set(OF_LIB_NAMES
-        brotli
-        cairo
-        curl
-        fmt
-        FreeImage
-        freetype
-        glew
-        glfw
-        glm
-        json
-        libpng
-        libusb
-        openssl
-        pixman
-        pugixml
-        rtAudio
-        tess2
-        uriparser
-        utf8
-        zlib
-)
-
-if (OF_TARGET_VS)
-    list(APPEND OF_LIB_NAMES videoInput)
-endif ()
-
-foreach (item ${OF_LIB_NAMES})
-    #    message("ITEM:::::: ${item}")
-    install(DIRECTORY libs/${item}/include
-            DESTINATION include
-            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl")
-endforeach ()
-
-foreach (item ${OF_LIB_NAMES})
-    set(WIN_ARCH "x64") # hardcoded for now
-
-    if (OF_TARGET_VS)
-        install(DIRECTORY libs/${item}/lib/vs/${WIN_ARCH}/
-                DESTINATION lib
-                FILES_MATCHING PATTERN "*.lib")
-    elseif (OF_TARGET_MACOS)
-        install(DIRECTORY libs/${item}/lib/macos/
-                DESTINATION lib
-                FILES_MATCHING PATTERN "*.a" PATTERN "*.dylib")
-        set(XCF_PATH "${OF_DIRECTORY}/libs/${item}/lib/macos/${item}.xcframework")
-        if (EXISTS ${XCF_PATH})
-            install(DIRECTORY ${XCF_PATH} DESTINATION lib)
-        endif ()
-    elseif (OF_TARGET_LINUX)
-        install(DIRECTORY libs/${dir}/lib/linux/
-                DESTINATION lib
-                FILES_MATCHING PATTERN "*.a" PATTERN "*.so")
-    endif ()
-endforeach ()
-
-add_custom_target(build_and_install
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
-        DEPENDS of_static
-)
-
-# Export targets
-install(EXPORT openFrameworksTargets
-        FILE openFrameworksTargets.cmake
-        NAMESPACE openFrameworks::
-        DESTINATION lib/cmake/openFrameworks
-)
-
-# Generate the config file
-configure_package_config_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/openFrameworksConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfig.cmake
-        INSTALL_DESTINATION lib/cmake/openFrameworks
-)
-
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfig.cmake
-        DESTINATION lib/cmake/openFrameworks
-)
-
-# These don't seem to work
-set_target_properties(of_static PROPERTIES
-        OUTPUT_NAME "openframeworksLib$<$<CONFIG:Debug>:_debug>"
-        CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED ON
-        C_STANDARD 17
-        C_STANDARD_REQUIRED ON
-)
-
-add_custom_command(TARGET of_static POST_BUILD
-        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR}
-        COMMENT "Installing openFrameworks after build"
-)
-
-if (OF_TARGET_MACOS)
-    # These don't seem to work
-    set_target_properties(of_static PROPERTIES
-            OBJCXX_STANDARD 20
-            OBJC_STANDARD 17
-    )
-endif ()
-
-# This seems to be the only thing that sets the c++ standard...
+# Use C++20 to fix filesystem API compatibility issues
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_STANDARD 17)
-set(CMAKE_C_STANDARD_REQUIRED ON)
 
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
-# -------------------------------------------------- #
-# Includes                                           #
-# -------------------------------------------------- #
+# -------------------------------------------------------
+# 1. Collect openFrameworks core sources
+# -------------------------------------------------------
+set(OF_ROOT "${CMAKE_SOURCE_DIR}/libs/openFrameworks")
 
-
-set(OF_HEADERS
-        ${OF_DIRECTORY}/libs/openFrameworks/
-        ${OF_DIRECTORY}/libs/openFrameworks/3d
-        ${OF_DIRECTORY}/libs/openFrameworks/app
-        ${OF_DIRECTORY}/libs/openFrameworks/communication
-        ${OF_DIRECTORY}/libs/openFrameworks/events
-        ${OF_DIRECTORY}/libs/openFrameworks/events
-        ${OF_DIRECTORY}/libs/openFrameworks/gl
-        ${OF_DIRECTORY}/libs/openFrameworks/graphics
-        ${OF_DIRECTORY}/libs/openFrameworks/math
-        ${OF_DIRECTORY}/libs/openFrameworks/sound
-        ${OF_DIRECTORY}/libs/openFrameworks/types
-        ${OF_DIRECTORY}/libs/openFrameworks/utils
-        ${OF_DIRECTORY}/libs/openFrameworks/video
-        ${OF_DIRECTORY}/libs/brotli/include
-        ${OF_DIRECTORY}/libs/cairo/include
-        ${OF_DIRECTORY}/libs/curl/include
-        ${OF_DIRECTORY}/libs/fmt/include
-        ${OF_DIRECTORY}/libs/FreeImage/include
-        ${OF_DIRECTORY}/libs/freetype/include
-        ${OF_DIRECTORY}/libs/FreeImage/include
-        ${OF_DIRECTORY}/libs/glew/include
-        ${OF_DIRECTORY}/libs/glfw/include
-        ${OF_DIRECTORY}/libs/glm/include
-        ${OF_DIRECTORY}/libs/json/include
-        ${OF_DIRECTORY}/libs/libpng/include
-        ${OF_DIRECTORY}/libs/libusb/include
-        ${OF_DIRECTORY}/libs/openssl/include
-        ${OF_DIRECTORY}/libs/pixman/include
-        ${OF_DIRECTORY}/libs/pugixml/include
-        ${OF_DIRECTORY}/libs/rtAudio/include
-        ${OF_DIRECTORY}/libs/tess2/include
-        ${OF_DIRECTORY}/libs/uriparser/include
-        ${OF_DIRECTORY}/libs/utf8/include
-        ${OF_DIRECTORY}/libs/zlib/include
+# Collect all .cpp and .c files from openFrameworks subfolders
+file(GLOB_RECURSE OF_CORE_SRC
+        ${OF_ROOT}/**/*.cpp
+        ${OF_ROOT}/**/*.c
 )
 
-#include_directories(${OF_HEADERS})
-
-target_include_directories(of_static
-        PUBLIC
-        $<BUILD_INTERFACE:${OF_HEADERS}>
-        #        $<INSTALL_INTERFACE:include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/include>
-
+# Collect all .h and .hpp files
+file(GLOB_RECURSE OF_CORE_HEADERS
+        ${OF_ROOT}/**/*.h
+        ${OF_ROOT}/**/*.hpp
 )
-# --------------------------------------------------
-# Libraries
-# --------------------------------------------------
 
-if (OF_TARGET_MACOS)
-    foreach (ITEM ${OF_LIB_NAMES})
-        set(XCF_PATH "${OF_DIRECTORY}/libs/${ITEM}/lib/macos/${ITEM}.xcframework")
-        # Some libs are include-only, so check if the xcframework exists
-        if (EXISTS ${XCF_PATH})
-            target_link_libraries(of_static PUBLIC ${XCF_PATH})
-        endif ()
-    endforeach ()
+# Remove platform-specific files based on OS
+if(WIN32)
+    # Remove Linux/Unix specific files
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofAppEGLWindow\\.cpp$")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/linux/.*")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/android/.*")
 
+    # Remove GStreamer files (Linux video backend)
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofGst.*\\.cpp$")
 
-    find_library(accelerate_lib Accelerate)
-    find_library(iokit_lib IOKit)
-    find_library(agl_lib AGL)
-    find_library(applicationservices_lib ApplicationServices)
-    find_library(audiotoolbox_lib AudioToolbox)
-    find_library(coreaudio_lib CoreAudio)
-    find_library(corefoundation_lib CoreFoundation)
-    find_library(coreservices_lib CoreServices)
-    find_library(opengl_lib OpenGL)
-    # find_library(quicktime_lib QuickTime)
-    find_library(corevideo_lib CoreVideo)
-    find_library(qtkit_lib QTKit)
-    find_library(cocoa_lib Cocoa)
-    find_library(coremedia_lib CoreMedia)
-    find_library(avfoundation_lib AVFoundation)
-    find_library(quartzcore_lib QuartzCore)
-    find_library(appkit_lib AppKit)
-    find_library(security_lib Security)
-    find_library(ldap_lib LDAP)
-    find_library(sys_conf SystemConfiguration)
+elseif(APPLE)
+    # Remove Windows and Linux specific files
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofAppEGLWindow\\.cpp$")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/linux/.*")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/android/.*")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/win/.*")
 
-    set(OF_FRAMEWORKS
-            ${accelerate_lib}
-            ${iokit_lib}
-            ${agl_lib}
-            ${applicationservices_lib}
-            ${audiotoolbox_lib}
-            ${coreaudio_lib}
-            ${corefoundation_lib}
-            ${coreservices_lib}
-            ${opengl_lib}
-            ${quicktime_lib}
-            ${corevideo_lib}
-            ${qtkit_lib}
-            ${cocoa_lib}
-            ${coremedia_lib}
-            ${avfoundation_lib}
-            ${quartzcore_lib}
-            ${appkit_lib}
-            ${security_lib}
-            ${ldap_lib}
-            ${sys_conf}
+    # Remove DirectShow files (Windows video backend)
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofDirectShow.*\\.cpp$")
+
+elseif(UNIX)
+    # Remove Windows and macOS specific files
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/win/.*")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/osx/.*")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/ios/.*")
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*/android/.*")
+
+    # Remove DirectShow files (Windows video backend)
+    list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofDirectShow.*\\.cpp$")
+endif()
+
+# Only remove FMOD sound player - keep the rest for sound support
+list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofFmodSoundPlayer\\.cpp$")
+
+# Create an OBJECT library first to compile sources
+add_library(openframeworks_obj OBJECT
+        ${OF_CORE_SRC}
+        ${OF_CORE_HEADERS}
+)
+
+# Now create the static library using the object library
+add_library(openframeworks STATIC $<TARGET_OBJECTS:openframeworks_obj>)
+
+# Include the openFrameworks root directory AND all subdirectories
+target_include_directories(openframeworks_obj PUBLIC
+        $<BUILD_INTERFACE:${OF_ROOT}>
+        $<BUILD_INTERFACE:${OF_ROOT}/3d>
+        $<BUILD_INTERFACE:${OF_ROOT}/app>
+        $<BUILD_INTERFACE:${OF_ROOT}/communication>
+        $<BUILD_INTERFACE:${OF_ROOT}/events>
+        $<BUILD_INTERFACE:${OF_ROOT}/gl>
+        $<BUILD_INTERFACE:${OF_ROOT}/graphics>
+        $<BUILD_INTERFACE:${OF_ROOT}/math>
+        $<BUILD_INTERFACE:${OF_ROOT}/sound>
+        $<BUILD_INTERFACE:${OF_ROOT}/types>
+        $<BUILD_INTERFACE:${OF_ROOT}/utils>
+        $<BUILD_INTERFACE:${OF_ROOT}/video>
+        $<INSTALL_INTERFACE:include/openframeworks>
+)
+
+target_include_directories(openframeworks PUBLIC
+        $<BUILD_INTERFACE:${OF_ROOT}>
+        $<BUILD_INTERFACE:${OF_ROOT}/3d>
+        $<BUILD_INTERFACE:${OF_ROOT}/app>
+        $<BUILD_INTERFACE:${OF_ROOT}/communication>
+        $<BUILD_INTERFACE:${OF_ROOT}/events>
+        $<BUILD_INTERFACE:${OF_ROOT}/gl>
+        $<BUILD_INTERFACE:${OF_ROOT}/graphics>
+        $<BUILD_INTERFACE:${OF_ROOT}/math>
+        $<BUILD_INTERFACE:${OF_ROOT}/sound>
+        $<BUILD_INTERFACE:${OF_ROOT}/types>
+        $<BUILD_INTERFACE:${OF_ROOT}/utils>
+        $<BUILD_INTERFACE:${OF_ROOT}/video>
+        $<INSTALL_INTERFACE:include/openframeworks>
+)
+
+# -------------------------------------------------------
+# 2. Find vcpkg packages
+# -------------------------------------------------------
+find_package(unofficial-brotli CONFIG REQUIRED)
+find_package(BZip2 REQUIRED)
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Cairo REQUIRED IMPORTED_TARGET cairo)
+pkg_check_modules(Pixman REQUIRED IMPORTED_TARGET pixman-1)
+
+find_package(CURL CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(freeimage CONFIG REQUIRED)
+find_package(Freetype REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(unofficial-libtess2 CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+find_package(RtAudio CONFIG REQUIRED)
+find_package(uriparser CONFIG REQUIRED)
+find_package(utf8cpp CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+
+if (WIN32)
+    find_package(videoinput CONFIG REQUIRED)
+endif()
+
+# Add utf8cpp subdirectory to include path manually
+# The package installs to utf8cpp/ but OF expects it at root
+if(TARGET utf8cpp::utf8cpp)
+    get_target_property(UTF8CPP_INCLUDE_DIRS utf8cpp::utf8cpp INTERFACE_INCLUDE_DIRECTORIES)
+    if(UTF8CPP_INCLUDE_DIRS)
+        foreach(dir ${UTF8CPP_INCLUDE_DIRS})
+            if(EXISTS "${dir}/utf8cpp")
+                target_include_directories(openframeworks_obj PUBLIC ${dir}/utf8cpp)
+                target_include_directories(openframeworks PUBLIC ${dir}/utf8cpp)
+            endif()
+        endforeach()
+    endif()
+endif()
+
+# -------------------------------------------------------
+# 3. Link everything into openFrameworks
+# -------------------------------------------------------
+
+# Link to object library for compilation
+# Use PRIVATE for CURL to avoid exporting it
+target_link_libraries(openframeworks_obj PUBLIC
+        unofficial::brotli::brotlienc
+        unofficial::brotli::brotlidec
+        unofficial::brotli::brotlicommon
+        BZip2::BZip2
+        PkgConfig::Cairo
+        PkgConfig::Pixman
+        fmt::fmt
+        freeimage::FreeImage
+        Freetype::Freetype
+        GLEW::GLEW
+        glfw
+        glm::glm
+        nlohmann_json::nlohmann_json
+        unofficial::libtess2::libtess2
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        pugixml::pugixml
+        RtAudio::rtaudio
+        uriparser::uriparser
+        utf8cpp::utf8cpp
+        ZLIB::ZLIB
+)
+
+# CURL is PRIVATE - apps will find it themselves
+target_link_libraries(openframeworks_obj PRIVATE
+        CURL::libcurl
+)
+
+# Link to static library for interface (this propagates to consumers)
+target_link_libraries(openframeworks PUBLIC
+        unofficial::brotli::brotlienc
+        unofficial::brotli::brotlidec
+        unofficial::brotli::brotlicommon
+        BZip2::BZip2
+        PkgConfig::Cairo
+        PkgConfig::Pixman
+        fmt::fmt
+        freeimage::FreeImage
+        Freetype::Freetype
+        GLEW::GLEW
+        glfw
+        glm::glm
+        nlohmann_json::nlohmann_json
+        unofficial::libtess2::libtess2
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        pugixml::pugixml
+        RtAudio::rtaudio
+        uriparser::uriparser
+        utf8cpp::utf8cpp
+        ZLIB::ZLIB
+)
+
+# CURL is PRIVATE - apps will find it themselves
+target_link_libraries(openframeworks PRIVATE
+        CURL::libcurl
+)
+
+if (WIN32)
+    target_link_libraries(openframeworks_obj PUBLIC
+            videoinput::videoinput
+            opengl32
+            gdi32
+            winmm
+            dxguid
+            ole32
+            oleaut32
+            uuid
+            strmiids
+            wsock32
+            ws2_32
+            mfplat
+            mfreadwrite
+            mfuuid
     )
 
-    target_link_libraries(of_static PUBLIC ${OF_FRAMEWORKS})
-
-elseif (OF_TARGET_VS)
-    set(OF_LIB_DIRS)
-    set(OF_LIB_FILES
-            brotlicommon.lib
-            brotlidec.lib
-            brotlienc.lib
-            libcairo.lib
-            libcurl.lib
-            fmt.lib
-            FreeImage$<$<CONFIG:Debug>:D>.lib
-            #            FreeImage.lib
-            freetype$<$<CONFIG:Debug>:d>.lib
-            #            freetype.lib
-            libglew32.lib
-            glfw3.lib
-            libpng.lib
-            libcrypto.lib
-            libssl.lib
-            libpixman-1.lib
-            pugixml$<$<CONFIG:Debug>:D>.lib
-            #            pugixml.lib
-            rtaudio$<$<CONFIG:Debug>:D>.lib
-            #            rtaudio.lib
-            tess2.lib
-            uriparser.lib
-            videoInput$<$<CONFIG:Debug>:D>.lib
-            #            videoInput.lib
-            zlib.lib
+    target_link_libraries(openframeworks PUBLIC
+            videoinput::videoinput
+            opengl32
+            gdi32
+            winmm
+            dxguid
+            ole32
+            oleaut32
+            uuid
+            strmiids
+            wsock32
+            ws2_32
+            mfplat
+            mfreadwrite
+            mfuuid
     )
 
-    #        message(STATUS ${OF_LIB_FILES})
-    set(WIN_ARCH "x64")
-    list(APPEND OF_LIB_NAMES "videoInput")
-    include_directories(${OF_DIRECTORY}/libs/videoInput/include)
-
-
-    set(FOUND_LIBS)
-    foreach (LIB ${OF_LIB_NAMES})
-        set(LIB_DIR "${OF_DIRECTORY}/libs/${LIB}/lib/vs/${WIN_ARCH}")
-        list(APPEND OF_LIB_DIRS ${LIB_DIR})
-        target_link_directories(of_static
-                PUBLIC
-                $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/${LIB}/lib/vs/${WIN_ARCH}>
-                $<INSTALL_INTERFACE:lib>
-        )
-        #        message("$<INSTALL_INTERFACE:vs/lib/${LIB}")
-    endforeach ()
-    #    target_link_directories(of_static
-    #            INTERFACE
-    #            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/curl/lib/vs/x64>
-    #            $<INSTALL_INTERFACE:lib>    # <-- tells consumers to use install tree
-    #    )
-    #    target_link_directories(of_static PUBLIC ${OF_LIB_DIRS})
-    #    message("KAJSHKJHSKJ --- ${OF_LIB_FILES}")
-    target_link_libraries(of_static PUBLIC ${OF_LIB_FILES})
-    #
-    #        message(STATUS "Searching for ${LIB} in ${LIB_DIR}")
-    #
-    #        find_library(found_lib_${LIB} NAMES ${LIB} PATHS ${LIB_DIR} NO_DEFAULT_PATH)
-    #
-    #        if (found_lib)
-    #            message(STATUS "Found: ${found_lib_${LIB}}")
-    #            list(APPEND FOUND_LIBS ${found_lib_${LIB}})
-    #        else ()
-    #            message(WARNING "Library ${LIB} not found in ${LIB_DIR}")
-    #        endif ()
-
-
-    #        set(LIB_DIR ${OF_DIRECTORY}/libs/${LIB}/lib/vs/${WIN_ARCH})
-    #        file(GLOB LIB_FILES "${LIB_DIR}/*.lib")
-    #        list(LENGTH LIB_FILES len)
-    #        if (len GREATER 0)
-    #            of_remove_debug_libs(LIB_FILES_NO_D "${LIB_FILES}")
-    #            target_link_libraries(of_static PUBLIC ${LIB_FILES_NO_D})
-    #        endif ()
-
-    #    endforeach ()
-
-    message(STATUS ${FOUND_LIBS})
-    set(OF_WIN_SYSTEM_LIBS msimg32 OpenGL32 kernel32 setupapi Vfw32 comctl32 dsound user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid iphlpapi crypt32 Ws2_32 winmm odbc32 odbccp32 wldap32 mf mfplat mfuuid d3d11 mfreadwrite xaudio2 ucrt)
-    target_link_libraries(of_static PUBLIC ${OF_WIN_SYSTEM_LIBS})
-endif ()
-
-#target_link_libraries(of_static PUBLIC ${OF_ADDON_FRAMEWORKS} ${OF_CORE_LIBS} ${OF_CORE_FRAMEWORKS})
-# target_link_libraries(of_shared ${OF_ADDON_FRAMEWORKS} ${OF_CORE_LIBS} ${OF_CORE_FRAMEWORKS} )
-
-# -------------------------------- Properties --------------------------------
-
-
-# --------------------------------------------------
-# Compilation options
-# --------------------------------------------------
-
-
-if (OF_TARGET_MACOS)
-    set_source_files_properties(${OF_SRC} PROPERTIES
-            COMPILE_FLAGS "-fobjc-arc")
-    target_compile_options(of_static PUBLIC
-            $<$<CONFIG:Debug>:-O0>
-            $<$<CONFIG:Release>:-O3>
-            $<$<COMPILE_LANGUAGE:CXX>:-std=c++20 -stdlib=libc++ -fobjc-arc -x objective-c++>
-            $<$<COMPILE_LANGUAGE:C>:-x objective-c>
-            -Wno-deprecated-declarations
+    target_compile_definitions(openframeworks_obj PUBLIC
+            GLEW_STATIC
+            NOMINMAX
+            _USE_MATH_DEFINES
+            WIN32_LEAN_AND_MEAN
+            UNICODE
+            _UNICODE
+            OF_SOUND_PLAYER_MEDIA_FOUNDATION
     )
-    target_compile_definitions(of_static PUBLIC __MACOSX_CORE__)
 
-elseif (OF_TARGET_VS)
-    target_compile_definitions(of_static PUBLIC
-            WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB) # GLEW_STATIC
-    target_compile_options(of_static PUBLIC
-            $<$<CONFIG:Debug>:/D _DEBUG /TP /external:W3 /Gy /Gs- /Od /ZI>
-            $<$<CONFIG:Release>:/O2 /W1>
-            $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
-            $<$<COMPILE_LANGUAGE:C>:/std:c17>
-            /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:__cplusplus /Zc:inline /Zc:wchar_t /fp:precise)
-#    target_link_options(of_static PUBLIC /MACHINE:X64 /NOLOGO)
-endif ()
+    target_compile_definitions(openframeworks PUBLIC
+            GLEW_STATIC
+            NOMINMAX
+            _USE_MATH_DEFINES
+            WIN32_LEAN_AND_MEAN
+            UNICODE
+            _UNICODE
+            OF_SOUND_PLAYER_MEDIA_FOUNDATION
+    )
+elseif(APPLE)
+    find_library(COCOA_LIBRARY Cocoa)
+    find_library(OPENGL_LIBRARY OpenGL)
+    target_link_libraries(openframeworks_obj PUBLIC
+            ${COCOA_LIBRARY}
+            ${OPENGL_LIBRARY}
+    )
+    target_link_libraries(openframeworks PUBLIC
+            ${COCOA_LIBRARY}
+            ${OPENGL_LIBRARY}
+    )
+elseif(UNIX)
+    find_package(X11 REQUIRED)
+    target_link_libraries(openframeworks_obj PUBLIC
+            X11::X11
+            X11::Xrandr
+            X11::Xcursor
+    )
+    target_link_libraries(openframeworks PUBLIC
+            X11::X11
+            X11::Xrandr
+            X11::Xcursor
+    )
+endif()
 
+# -------------------------------------------------------
+# 4. Export openframeworks for use by apps
+# -------------------------------------------------------
 
+# Export the target to a file
+export(TARGETS openframeworks
+        NAMESPACE openframeworks::
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/openframeworks-targets.cmake"
+)
 
+# Create the config file
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/openframeworks-config.cmake" "
+include(CMakeFindDependencyMacro)
 
+# Find PkgConfig first
+find_dependency(PkgConfig REQUIRED)
+pkg_check_modules(Cairo REQUIRED IMPORTED_TARGET cairo)
+pkg_check_modules(Pixman REQUIRED IMPORTED_TARGET pixman-1)
 
+# Find all dependencies
+find_dependency(unofficial-brotli CONFIG REQUIRED)
+find_dependency(BZip2 REQUIRED)
+find_dependency(fmt CONFIG REQUIRED)
+find_dependency(freeimage CONFIG REQUIRED)
+find_dependency(Freetype REQUIRED)
+find_dependency(GLEW REQUIRED)
+find_dependency(glfw3 CONFIG REQUIRED)
+find_dependency(glm CONFIG REQUIRED)
+find_dependency(nlohmann_json CONFIG REQUIRED)
+find_dependency(unofficial-libtess2 CONFIG REQUIRED)
+find_dependency(OpenSSL REQUIRED)
+find_dependency(pugixml CONFIG REQUIRED)
+find_dependency(RtAudio CONFIG REQUIRED)
+find_dependency(uriparser CONFIG REQUIRED)
+find_dependency(utf8cpp CONFIG REQUIRED)
+find_dependency(ZLIB REQUIRED)
+
+if(WIN32)
+    find_dependency(videoinput CONFIG REQUIRED)
+endif()
+
+# Note: CURL is not in the dependency list because it's linked privately
+# Apps using openFrameworks should find CURL themselves if they need it directly
+
+# Include the targets
+include(\"\${CMAKE_CURRENT_LIST_DIR}/openframeworks-targets.cmake\")
+
+# Set found variable
+set(openframeworks_FOUND TRUE)
+")
+
+message(STATUS "openFrameworks config file created at: ${CMAKE_CURRENT_BINARY_DIR}/openframeworks-config.cmake")

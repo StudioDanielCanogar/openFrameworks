@@ -1,0 +1,30 @@
+{
+  "name": "myfirstapp",
+  "version": "0.1.0",
+  "dependencies": [
+    "pkgconf",
+    "cairo",
+    "pixman",
+    "brotli",
+    "bzip2",
+    "curl",
+    "fmt",
+    "freeimage",
+    "freetype",
+    "glew",
+    "glfw3",
+    "glm",
+    "nlohmann-json",
+    "libtess2",
+    "openssl",
+    "pugixml",
+    "rtaudio",
+    "uriparser",
+    "utfcpp",
+    "zlib",
+    {
+      "name": "videoinput",
+      "platform": "windows"
+    }
+  ]
+}

@@ -827,9 +827,9 @@ void ofFile::setWriteable(bool flag){
 	try{
 #if !defined(OF_USING_STD_FS) || (defined(OF_USING_STD_FS) && defined(OF_USE_EXPERIMENTAL_FS))
 		if(flag){
-			fs::permissions(myFile,fs::perms::owner_write | fs::perms::add_perms);
+			fs::permissions(myFile, fs::perms::owner_write, fs::perm_options::add);
 		}else{
-			fs::permissions(myFile,fs::perms::owner_write | fs::perms::remove_perms);
+			fs::permissions(myFile, fs::perms::owner_write, fs::perm_options::remove);
 		}
 #else
 		if(flag){
@@ -854,9 +854,9 @@ void ofFile::setReadable(bool flag){
 	try{
 #if !defined(OF_USING_STD_FS) || (defined(OF_USING_STD_FS) && defined(OF_USE_EXPERIMENTAL_FS))
 		if(flag){
-			fs::permissions(myFile,fs::perms::owner_read | fs::perms::add_perms);
+			fs::permissions(myFile, fs::perms::owner_read, fs::perm_options::add);
 		}else{
-			fs::permissions(myFile,fs::perms::owner_read | fs::perms::remove_perms);
+			fs::permissions(myFile, fs::perms::owner_read, fs::perm_options::remove);
 		}
 #else
 		if(flag){
@@ -897,9 +897,9 @@ void ofFile::setExecutable(bool flag){
 #   endif
 #else
 		if(flag){
-			fs::permissions(myFile, fs::perms::owner_exe | fs::perms::add_perms);
+			fs::permissions(myFile, fs::perms::owner_exec, fs::perm_options::add);
 		} else{
-			fs::permissions(myFile, fs::perms::owner_exe | fs::perms::remove_perms);
+			fs::permissions(myFile, fs::perms::owner_exec, fs::perm_options::remove);
 		}
 #endif
 	}catch(std::exception & e){
@@ -1773,7 +1773,20 @@ fs::path ofFilePath::getPathForDirectoryFS(const fs::path & path){
 	return path / "";
 #else
 	auto sep = fs::path("/").make_preferred();
-	if(!path.empty() && ofToString(path.back()) != sep.string()){
+	auto pathStr = path.string();
+	auto sepStr = sep.string();
+	
+	// Check if path already ends with a separator
+	bool endsWithSep = false;
+	if(!pathStr.empty() && !sepStr.empty()){
+		// Check if the path string ends with the separator
+		if(pathStr.length() >= sepStr.length()){
+			endsWithSep = (pathStr.compare(pathStr.length() - sepStr.length(), 
+			                               sepStr.length(), sepStr) == 0);
+		}
+	}
+	
+	if(!path.empty() && !endsWithSep){
 		return path / sep;
 	}else{
 		return path;
