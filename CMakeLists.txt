@@ -110,21 +110,7 @@ add_library(of_static STATIC ${OF_SRC})
 
 include(CMakePackageConfigHelpers)
 
-# Export target for downstream apps
-install(TARGETS of_static
-        EXPORT openFrameworksTargets
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-)
-
-# Install openFrameworks headers
-install(DIRECTORY libs/openFrameworks
-        DESTINATION include
-        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl"
-)
 find_package(PkgConfig REQUIRED)
-
 find_package(fmt CONFIG REQUIRED)
 find_package(unofficial-brotli CONFIG REQUIRED)
 
@@ -185,30 +171,31 @@ find_package(utf8cpp CONFIG REQUIRED)
 #endif()
 
 # Optional: propagate other CFLAGS from pkg-config if needed
-target_compile_options(of_static PUBLIC ${cairo_CFLAGS_OTHER} ${libusb_CFLAGS_OTHER})
+target_compile_options(of_static PRIVATE ${cairo_CFLAGS_OTHER} ${libusb_CFLAGS_OTHER})
 
-target_link_libraries(of_static PUBLIC unofficial::brotli::brotlidec)
-target_link_libraries(of_static PUBLIC unofficial::brotli::brotlienc)
-target_link_libraries(of_static PUBLIC Cairo::Cairo)
-target_link_libraries(of_static PUBLIC ZLIB::ZLIB)
-target_link_libraries(of_static PUBLIC PNG::PNG)
-target_link_libraries(of_static PUBLIC Freetype::Freetype)
-target_link_libraries(of_static PUBLIC Pixman::Pixman)
-target_link_libraries(of_static PUBLIC OpenSSL::SSL)
-target_link_libraries(of_static PUBLIC OpenSSL::Crypto)
-target_link_libraries(of_static PUBLIC CURL::libcurl_static)
-target_link_libraries(of_static PUBLIC fmt::fmt)
-target_link_libraries(of_static PUBLIC freeimage::FreeImage)
-target_link_libraries(of_static PUBLIC GLEW::glew_s)
-target_link_libraries(of_static PUBLIC glfw)
-target_link_libraries(of_static PUBLIC glm::glm-header-only)
-target_link_libraries(of_static PUBLIC unofficial::libtess2::libtess2)
-target_link_libraries(of_static PUBLIC libusb::libusb)
-target_link_libraries(of_static PUBLIC nlohmann_json::nlohmann_json)
-target_link_libraries(of_static PUBLIC pugixml::static pugixml::pugixml)
-target_link_libraries(of_static PUBLIC RtAudio::rtaudio)
-target_link_libraries(of_static PUBLIC uriparser::uriparser)
-target_link_libraries(of_static PUBLIC utf8::cpp utf8cpp::utf8cpp)
+target_link_libraries(of_static PRIVATE unofficial::brotli::brotlidec)
+target_link_libraries(of_static PRIVATE unofficial::brotli::brotlienc)
+target_link_libraries(of_static PRIVATE unofficial::brotli::brotlicommon)
+target_link_libraries(of_static PRIVATE Cairo::Cairo)
+target_link_libraries(of_static PRIVATE ZLIB::ZLIB)
+target_link_libraries(of_static PRIVATE PNG::PNG)
+target_link_libraries(of_static PRIVATE Freetype::Freetype)
+target_link_libraries(of_static PRIVATE Pixman::Pixman)
+target_link_libraries(of_static PRIVATE OpenSSL::SSL)
+target_link_libraries(of_static PRIVATE OpenSSL::Crypto)
+target_link_libraries(of_static PRIVATE CURL::libcurl_static)
+target_link_libraries(of_static PRIVATE fmt::fmt)
+target_link_libraries(of_static PRIVATE freeimage::FreeImage)
+target_link_libraries(of_static PRIVATE GLEW::glew_s)
+target_link_libraries(of_static PRIVATE glfw)
+target_link_libraries(of_static PRIVATE glm::glm-header-only)
+target_link_libraries(of_static PRIVATE unofficial::libtess2::libtess2)
+target_link_libraries(of_static PRIVATE libusb::libusb)
+target_link_libraries(of_static PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
+target_link_libraries(of_static PRIVATE RtAudio::rtaudio)
+target_link_libraries(of_static PRIVATE uriparser::uriparser)
+target_link_libraries(of_static PRIVATE utf8::cpp utf8cpp::utf8cpp)
 
 
 
@@ -240,64 +227,69 @@ if (OF_TARGET_VS)
     list(APPEND OF_LIB_NAMES videoInput)
 endif ()
 
-#foreach (item ${OF_LIB_NAMES})
-#    #    message("ITEM:::::: ${item}")
-#    install(DIRECTORY libs/${item}/include
-#            DESTINATION include
-#            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.inl")
-#endforeach ()
 
-#foreach (item ${OF_LIB_NAMES})
-#    set(WIN_ARCH "x64") # hardcoded for now
-#
-#    if (OF_TARGET_VS)
-#        install(DIRECTORY libs/${item}/lib/vs/${WIN_ARCH}/
-#                DESTINATION lib
-#                FILES_MATCHING PATTERN "*.lib")
-#    elseif (OF_TARGET_MACOS)
-#        install(DIRECTORY libs/${item}/lib/macos/
-#                DESTINATION lib
-#                FILES_MATCHING PATTERN "*.a" PATTERN "*.dylib")
-#        set(XCF_PATH "${OF_DIRECTORY}/libs/${item}/lib/macos/${item}.xcframework")
-#        if (EXISTS ${XCF_PATH})
-#            install(DIRECTORY ${XCF_PATH} DESTINATION lib)
-#        endif ()
-#    elseif (OF_TARGET_LINUX)
-#        install(DIRECTORY libs/${dir}/lib/linux/
-#                DESTINATION lib
-#                FILES_MATCHING PATTERN "*.a" PATTERN "*.so")
-#    endif ()
-#endforeach ()
+#add_custom_target(build_and_install
+#        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
+#        DEPENDS of_static
+#)
 
-add_custom_target(build_and_install
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
-        DEPENDS of_static
+
+
+# Only override prefix for LOCAL builds, never inside vcpkg
+# vcpkg sets CMAKE_INSTALL_PREFIX itself, so don't override it
+#if(NOT DEFINED VCPKG_TARGET_TRIPLET)
+#    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+#        set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install" CACHE PATH "" FORCE)
+#        message(STATUS "Setting install prefix to: ${CMAKE_INSTALL_PREFIX}")
+#    endif()
+#else()
+#    message(STATUS "vcpkg detected - using vcpkg install prefix: ${CMAKE_INSTALL_PREFIX}")
+#endif()
+
+# Install the library
+install(TARGETS of_static
+        EXPORT openframeworksTargets
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
 )
 
-# Export targets
-install(EXPORT openFrameworksTargets
-        FILE openFrameworksTargets.cmake
-        NAMESPACE openFrameworks::
-        DESTINATION lib/cmake/openFrameworks
+message(STATUS "---------------PREFIX = ${CMAKE_INSTALL_PREFIX}")
+# Install headers - using absolute path with correct case
+install(DIRECTORY "${OF_DIRECTORY}/libs/openFrameworks/"
+        DESTINATION include/openFrameworks
+        FILES_MATCHING
+        PATTERN "*.h"
+        PATTERN "*.hpp"
+        PATTERN "*.inl"
+        PATTERN "*.mm"
+        PATTERN "*.m"
 )
 
-# Generate the config and version files for find_package
+# Install export targets
+install(EXPORT openframeworksTargets
+        FILE openframeworksTargets.cmake
+        NAMESPACE openframeworks::
+        DESTINATION lib/cmake/openframeworks
+)
+
+# Generate and install config files
 configure_package_config_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/openFrameworksConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfig.cmake
-        INSTALL_DESTINATION lib/cmake/openFrameworks
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/openframeworksConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfig.cmake
+        INSTALL_DESTINATION lib/cmake/openframeworks
 )
 
 write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfigVersion.cmake
         VERSION 0.1.0
         COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/openFrameworksConfigVersion.cmake
-        DESTINATION lib/cmake/openFrameworks
+        ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfigVersion.cmake
+        DESTINATION lib/cmake/openframeworks
 )
 
 # These don't seem to work
@@ -309,10 +301,10 @@ set_target_properties(of_static PROPERTIES
         C_STANDARD_REQUIRED ON
 )
 
-add_custom_command(TARGET of_static POST_BUILD
-        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR}
-        COMMENT "Installing openFrameworks after build"
-)
+#add_custom_command(TARGET of_static POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR}
+#        COMMENT "Installing openframeworks after build"
+#)
 
 if (OF_TARGET_MACOS)
     # These don't seem to work
@@ -351,10 +343,38 @@ set(OF_HEADERS
 )
 
 # Publish public headers to dependents (build tree and install tree)
+# Publish public headers to dependents (build tree and install tree)
 target_include_directories(of_static PUBLIC
-        $<BUILD_INTERFACE:${OF_HEADERS}>
-        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/3d>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/app>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/communication>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/events>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/gl>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/graphics>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/math>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/sound>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/types>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/utils>
+        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks/video>
+        $<INSTALL_INTERFACE:include/openFrameworks>
+        $<INSTALL_INTERFACE:include/openFrameworks/3d>
+        $<INSTALL_INTERFACE:include/openFrameworks/app>
+        $<INSTALL_INTERFACE:include/openFrameworks/communication>
+        $<INSTALL_INTERFACE:include/openFrameworks/events>
+        $<INSTALL_INTERFACE:include/openFrameworks/gl>
+        $<INSTALL_INTERFACE:include/openFrameworks/graphics>
+        $<INSTALL_INTERFACE:include/openFrameworks/math>
+        $<INSTALL_INTERFACE:include/openFrameworks/sound>
+        $<INSTALL_INTERFACE:include/openFrameworks/types>
+        $<INSTALL_INTERFACE:include/openFrameworks/utils>
+        $<INSTALL_INTERFACE:include/openFrameworks/video>
 )
+
+#target_include_directories(of_static PUBLIC
+#        $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/openFrameworks>
+#        $<INSTALL_INTERFACE:include/openframeworks>
+#)
 # --------------------------------------------------
 # Libraries
 # --------------------------------------------------

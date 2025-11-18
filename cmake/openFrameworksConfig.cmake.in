@@ -1,3 +1,53 @@
 @PACKAGE_INIT@
 
-include("${CMAKE_CURRENT_LIST_DIR}/openFrameworksTargets.cmake")
+
+include(CMakeFindDependencyMacro)
+
+# Find all required dependencies
+find_dependency(fmt CONFIG)
+find_dependency(unofficial-brotli CONFIG)
+find_dependency(ZLIB)
+find_dependency(PNG)
+find_dependency(Freetype)
+find_dependency(OpenSSL)
+find_dependency(CURL)
+find_dependency(freeimage CONFIG)
+find_dependency(GLEW)
+find_dependency(glfw3 CONFIG)
+find_dependency(glm CONFIG)
+find_dependency(unofficial-libtess2 CONFIG)
+find_dependency(nlohmann_json CONFIG)
+find_dependency(pugixml CONFIG)
+find_dependency(RtAudio CONFIG)
+find_dependency(uriparser CONFIG)
+find_dependency(utf8cpp CONFIG)
+
+# Find pkg-config dependencies
+#find_package(PkgConfig REQUIRED)
+pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
+pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+
+# Create interface targets for pkg-config deps if not already created
+if(NOT TARGET Cairo::Cairo)
+    add_library(Cairo::Cairo INTERFACE IMPORTED)
+    target_include_directories(Cairo::Cairo INTERFACE ${CAIRO_INCLUDE_DIRS})
+    target_link_libraries(Cairo::Cairo INTERFACE ${CAIRO_LIBRARIES})
+endif()
+
+if(NOT TARGET Pixman::Pixman)
+add_library(Pixman::Pixman INTERFACE IMPORTED)
+target_include_directories(Pixman::Pixman INTERFACE ${PIXMAN_INCLUDE_DIRS})
+target_link_libraries(Pixman::Pixman INTERFACE ${PIXMAN_LIBRARIES})
+endif()
+
+if(NOT TARGET libusb::libusb)
+add_library(libusb::libusb INTERFACE IMPORTED)
+target_include_directories(libusb::libusb INTERFACE ${LIBUSB_INCLUDE_DIRS})
+target_link_libraries(libusb::libusb INTERFACE ${LIBUSB_LIBRARIES})
+endif()
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/openframeworksTargets.cmake")
+
+check_required_components(openframeworks)

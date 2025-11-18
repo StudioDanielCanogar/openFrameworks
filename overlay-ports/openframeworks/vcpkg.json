@@ -1,0 +1,35 @@
+{
+  "name": "openframeworks",
+  "version-string": "0.12.0-vcpkg",
+  "description": "Modern CMake-based build of openFrameworks",
+  "homepage": "https://github.com/StudioDanielCanogar/openFrameworks",
+  "dependencies": [
+    "brotli",
+    "cairo",
+    "curl",
+    "fmt",
+    "freeimage",
+    "freetype",
+    "glew",
+    "glfw3",
+    "glm",
+    "libtess2",
+    "libusb",
+    "nlohmann-json",
+    "openssl",
+    "pixman",
+    "pugixml",
+    "rtaudio",
+    "uriparser",
+    "utfcpp",
+    "zlib",
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}

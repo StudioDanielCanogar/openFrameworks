@@ -235,8 +235,6 @@ set(OF_APP_NAME)
 set(OF_MACOS_BUNDLE_ID "com.example.one")
 
 macro(ofApp APP_NAME SOURCE_FILES)
-    #    ofDetectTarget()
-    #    ofSetInstallPrefix()
 
     # This seems to be the only thing that sets the c++ standard...
     set(CMAKE_CXX_STANDARD 20)
@@ -252,13 +250,10 @@ macro(ofApp APP_NAME SOURCE_FILES)
 
     set(ofIncludeDir "${OF_INSTALL_PREFIX}/include/openFrameworks")
     file(GLOB children RELATIVE "${ofIncludeDir}" "${ofIncludeDir}/*/")
-    #    message("${children}")
-    #    message(STATUS "Found children: ${children}")
     include_directories(${ofIncludeDir})
     include_directories(${OF_INSTALL_PREFIX}/include)
     ofGetSubdirNames(subDirs ${ofIncludeDir})
     ofPrintList(subDirs)
-    #    message("-------------- ${ofIncludeDir}")
     foreach (item ${subDirs})
         include_directories("${ofIncludeDir}/${item}")
     endforeach ()
@@ -346,7 +341,7 @@ macro(ofApp APP_NAME SOURCE_FILES)
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
             OUTPUT_NAME ${OUTPUT_APP_NAME}
     )
-    target_link_libraries(${APP_NAME} PRIVATE openFrameworks::of_static)
+    target_link_libraries(${APP_NAME} PRIVATE openframeworks::of_static)
 
 endmacro()
 
@@ -402,4 +397,3 @@ function(ofSetInstallPrefix)
 endfunction()
 
 ofDetectTarget()
-ofSetInstallPrefix()

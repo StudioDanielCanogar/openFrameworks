@@ -201,3 +201,6 @@ libs/openFrameworksCompiled/project/android/build-*/
 install/
 
 cmake-build-*/
+
+vcpkg_installed
+thirdParty
