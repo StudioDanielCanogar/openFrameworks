@@ -110,57 +110,30 @@ add_library(of_static STATIC ${OF_SRC})
 
 include(CMakePackageConfigHelpers)
 
-find_package(PkgConfig REQUIRED)
-find_package(fmt CONFIG REQUIRED)
 find_package(unofficial-brotli CONFIG REQUIRED)
+find_package(BZip2 REQUIRED)
 
-pkg_check_modules(CAIRO REQUIRED cairo)
-add_library(Cairo::Cairo INTERFACE IMPORTED)
-target_include_directories(Cairo::Cairo INTERFACE
-        "${CAIRO_INCLUDEDIR}"
-)
-target_link_libraries(Cairo::Cairo INTERFACE
-        ${CAIRO_LIBRARIES}
-)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
+pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
-#target_include_directories(of_static PUBLIC ${cairo_INCLUDE_DIRS})
-
-#target_include_directories(of_static PUBLIC ${cairo_INCLUDE_DIRS})
-find_package(ZLIB REQUIRED)
-find_package(PNG REQUIRED)
-find_package(Freetype REQUIRED)
-
-pkg_check_modules(PIXMAN REQUIRED pixman-1)
-add_library(Pixman::Pixman INTERFACE IMPORTED)
-target_include_directories(Pixman::Pixman INTERFACE
-        "${PIXMAN_INCLUDEDIR}"
-)
-target_link_libraries(Pixman::Pixman INTERFACE
-        ${PIXMAN_LIBRARIES}
-)
-
-find_package(OpenSSL REQUIRED)
-find_package(CURL REQUIRED)
+find_package(CURL CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 find_package(freeimage CONFIG REQUIRED)
+find_package(Freetype REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(unofficial-libtess2 CONFIG REQUIRED)
-
-pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
-add_library(libusb::libusb INTERFACE IMPORTED)
-target_include_directories(libusb::libusb INTERFACE
-        "${LIBUSB_INCLUDEDIR}"
-)
-target_link_libraries(libusb::libusb INTERFACE
-        ${LIBUSB_LIBRARIES}
-)
-
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(unofficial-libtess2 CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(pugixml CONFIG REQUIRED)
 find_package(RtAudio CONFIG REQUIRED)
-find_package(uriparser CONFIG REQUIRED char wchar_t)
+find_package(uriparser CONFIG REQUIRED)
 find_package(utf8cpp CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+
 
 ## Propagate include dirs for pkg-config-only deps
 #if (cairo_FOUND)
@@ -173,14 +146,17 @@ find_package(utf8cpp CONFIG REQUIRED)
 # Optional: propagate other CFLAGS from pkg-config if needed
 target_compile_options(of_static PRIVATE ${cairo_CFLAGS_OTHER} ${libusb_CFLAGS_OTHER})
 
+# Use PkgConfig::CAIRO instead of manual interface
+target_link_libraries(of_static PUBLIC PkgConfig::CAIRO)
+target_link_libraries(of_static PUBLIC PkgConfig::PIXMAN)
+target_link_libraries(of_static PUBLIC PkgConfig::LIBUSB)
+
 target_link_libraries(of_static PRIVATE unofficial::brotli::brotlidec)
 target_link_libraries(of_static PRIVATE unofficial::brotli::brotlienc)
 target_link_libraries(of_static PRIVATE unofficial::brotli::brotlicommon)
-target_link_libraries(of_static PRIVATE Cairo::Cairo)
 target_link_libraries(of_static PRIVATE ZLIB::ZLIB)
 target_link_libraries(of_static PRIVATE PNG::PNG)
 target_link_libraries(of_static PRIVATE Freetype::Freetype)
-target_link_libraries(of_static PRIVATE Pixman::Pixman)
 target_link_libraries(of_static PRIVATE OpenSSL::SSL)
 target_link_libraries(of_static PRIVATE OpenSSL::Crypto)
 target_link_libraries(of_static PRIVATE CURL::libcurl_static)
@@ -190,48 +166,11 @@ target_link_libraries(of_static PRIVATE GLEW::glew_s)
 target_link_libraries(of_static PRIVATE glfw)
 target_link_libraries(of_static PRIVATE glm::glm-header-only)
 target_link_libraries(of_static PRIVATE unofficial::libtess2::libtess2)
-target_link_libraries(of_static PRIVATE libusb::libusb)
 target_link_libraries(of_static PRIVATE nlohmann_json::nlohmann_json)
 target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
 target_link_libraries(of_static PRIVATE RtAudio::rtaudio)
 target_link_libraries(of_static PRIVATE uriparser::uriparser)
 target_link_libraries(of_static PRIVATE utf8::cpp utf8cpp::utf8cpp)
-
-
-
-# Install 3rd-party headers
-set(OF_LIB_NAMES
-#        brotli
-#        cairo
-#        curl
-#        fmt
-#        FreeImage
-#        freetype
-#        glew
-#        glfw
-#        glm
-#        json
-#        libpng
-#        libusb
-#        openssl
-#        pixman
-#        pugixml
-#        rtAudio
-#        tess2
-#        uriparser
-#        utf8
-#        zlib
-)
-
-if (OF_TARGET_VS)
-    list(APPEND OF_LIB_NAMES videoInput)
-endif ()
-
-
-#add_custom_target(build_and_install
-#        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target install
-#        DEPENDS of_static
-#)
 
 
 
@@ -290,6 +229,15 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfigVersion.cmake
         DESTINATION lib/cmake/openframeworks
+)
+
+# Install shaders
+install(DIRECTORY "${OF_DIRECTORY}/libs/openFrameworks/gl/shaders/"
+        DESTINATION share/openframeworks/shaders
+        FILES_MATCHING
+        PATTERN "*.frag"
+        PATTERN "*.vert"
+        PATTERN "*.glsl"
 )
 
 # These don't seem to work
@@ -369,6 +317,29 @@ target_include_directories(of_static PUBLIC
         $<INSTALL_INTERFACE:include/openFrameworks/types>
         $<INSTALL_INTERFACE:include/openFrameworks/utils>
         $<INSTALL_INTERFACE:include/openFrameworks/video>
+)
+
+# Add utf8cpp subdirectory to include path manually
+# The package installs to utf8cpp/ but OF expects it at root
+if(TARGET utf8cpp::utf8cpp)
+    get_target_property(UTF8CPP_INCLUDE_DIRS utf8cpp::utf8cpp INTERFACE_INCLUDE_DIRECTORIES)
+    if(UTF8CPP_INCLUDE_DIRS)
+        foreach(dir ${UTF8CPP_INCLUDE_DIRS})
+            if(EXISTS "${dir}/utf8cpp")
+                target_include_directories(openframeworks PUBLIC ${dir}/utf8cpp)
+            endif()
+        endforeach()
+    endif()
+endif()
+
+# Generate config header with paths
+configure_file(
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/ofConfig.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/ofConfig.h
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ofConfig.h
+        DESTINATION include/openFrameworks
 )
 
 #target_include_directories(of_static PUBLIC

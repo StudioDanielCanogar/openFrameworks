@@ -1,0 +1,3 @@
+#pragma once
+
+#define OF_SHADER_DIR "@CMAKE_INSTALL_PREFIX@/share/openframeworks/shaders"

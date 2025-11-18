@@ -17,33 +17,30 @@ endif()
 
 vcpkg_cmake_configure(
         SOURCE_PATH ${SOURCE_PATH}
-#        PREFER_NINJA
         OPTIONS ${PLATFORM_FLAGS}
 )
 
 # Build + install
-# Use the modern vcpkg_cmake_install function
 vcpkg_cmake_install()
 
-
-
+# Remove bits that don't need to be copied over
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/include/openFrameworks/.idea")
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
-
-
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/include/openFrameworks/gl/shaders")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
 # Fix up CMake config files location
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/openframeworks)
 
 # Fix .pc files if needed
-#vcpkg_fixup_pkgconfig()
+vcpkg_fixup_pkgconfig()
 
 # Copy config files to vcpkg-standard location
 #message(STATUS "---------------------PACKAGES DIR: ${CMAKE_INSTALL_PREFIX}")
 
 #file(INSTALL
-#        "${CURRENT_PACKAGES_DIR}"
+#        ${SOURCE_PATH}/gl/shaders
 #        DESTINATION "${CURRENT_PACKAGES_DIR}/share/openframeworks"
-#        FILES_MATCHING PATTERN "*.cmake"
+#        FILES_MATCHING PATTERN "*.frag"
 #)
 
 # Install license
