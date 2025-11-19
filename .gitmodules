@@ -2,3 +2,6 @@
 	path = apps/projectGenerator
 	url = https://github.com/openframeworks/projectGenerator
 	branch = master
+[submodule "thirdParty/vcpkg"]
+	path = thirdParty/vcpkg
+	url = https://github.com/microsoft/vcpkg.git

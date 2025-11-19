@@ -29,12 +29,22 @@ target_link_libraries(videoinput PUBLIC
 )
 
 install(TARGETS videoinput
+    EXPORT videoinputTargets
     ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+)
+
+# Install export targets
+install(EXPORT videoinputTargets
+        FILE videoinputTargets.cmake
+        NAMESPACE videoinput::
+        DESTINATION lib/cmake/videoinput
 )
 ")
 
 vcpkg_cmake_configure(SOURCE_PATH "${VIDEOINPUT_SRC}")
 vcpkg_cmake_install()
+
 
 # Remove any debug include directory
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
@@ -77,6 +87,7 @@ endif()
 
 set(videoinput_FOUND TRUE)
 ")
+
 
 # Copyright
 file(WRITE "${CURRENT_PACKAGES_DIR}/share/${PORT}/copyright" "Copyright (c) Theodore Watson - https://github.com/ofTheo/videoInput")

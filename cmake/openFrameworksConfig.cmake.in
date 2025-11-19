@@ -28,6 +28,10 @@ find_dependency(pugixml CONFIG)
 find_dependency(RtAudio CONFIG)
 find_dependency(uriparser CONFIG)
 find_dependency(utf8cpp CONFIG)
+#if (WIN32)
+    find_dependency(videoinput CONFIG)
+#endif()
+
 
 # Provide shader path for consumers
 set(OPENFRAMEWORKS_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/openframeworks/shaders")

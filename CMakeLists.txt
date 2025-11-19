@@ -118,7 +118,7 @@ pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
 pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
-find_package(CURL CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(freeimage CONFIG REQUIRED)
 find_package(Freetype REQUIRED)
@@ -159,15 +159,19 @@ target_link_libraries(of_static PRIVATE PNG::PNG)
 target_link_libraries(of_static PRIVATE Freetype::Freetype)
 target_link_libraries(of_static PRIVATE OpenSSL::SSL)
 target_link_libraries(of_static PRIVATE OpenSSL::Crypto)
-target_link_libraries(of_static PRIVATE CURL::libcurl_static)
+target_link_libraries(of_static PRIVATE CURL::libcurl)
 target_link_libraries(of_static PRIVATE fmt::fmt)
 target_link_libraries(of_static PRIVATE freeimage::FreeImage)
-target_link_libraries(of_static PRIVATE GLEW::glew_s)
+target_link_libraries(of_static PRIVATE GLEW::glew)
 target_link_libraries(of_static PRIVATE glfw)
 target_link_libraries(of_static PRIVATE glm::glm-header-only)
 target_link_libraries(of_static PRIVATE unofficial::libtess2::libtess2)
 target_link_libraries(of_static PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
+if (OF_TARGET_MACOS)
+    target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
+else ()
+    target_link_libraries(of_static PRIVATE pugixml::shared pugixml::pugixml)
+endif ()
 target_link_libraries(of_static PRIVATE RtAudio::rtaudio)
 target_link_libraries(of_static PRIVATE uriparser::uriparser)
 target_link_libraries(of_static PRIVATE utf8::cpp utf8cpp::utf8cpp)
@@ -406,84 +410,7 @@ if (OF_TARGET_MACOS)
     target_link_libraries(of_static PUBLIC ${OF_FRAMEWORKS})
 
 elseif (OF_TARGET_VS)
-    set(OF_LIB_DIRS)
-    set(OF_LIB_FILES
-            brotlicommon.lib
-            brotlidec.lib
-            brotlienc.lib
-            libcairo.lib
-            libcurl.lib
-#            fmt.lib
-            FreeImage$<$<CONFIG:Debug>:D>.lib
-            #            FreeImage.lib
-            freetype$<$<CONFIG:Debug>:d>.lib
-            #            freetype.lib
-            libglew32.lib
-            glfw3.lib
-            libpng.lib
-            libcrypto.lib
-            libssl.lib
-            libpixman-1.lib
-            pugixml$<$<CONFIG:Debug>:D>.lib
-            #            pugixml.lib
-            rtaudio$<$<CONFIG:Debug>:D>.lib
-            #            rtaudio.lib
-            tess2.lib
-            uriparser.lib
-            videoInput$<$<CONFIG:Debug>:D>.lib
-            #            videoInput.lib
-            zlib.lib
-    )
 
-    #        message(STATUS ${OF_LIB_FILES})
-    set(WIN_ARCH "x64")
-    list(APPEND OF_LIB_NAMES "videoInput")
-    include_directories(${OF_DIRECTORY}/libs/videoInput/include)
-
-
-    set(FOUND_LIBS)
-    foreach (LIB ${OF_LIB_NAMES})
-        set(LIB_DIR "${OF_DIRECTORY}/libs/${LIB}/lib/vs/${WIN_ARCH}")
-        list(APPEND OF_LIB_DIRS ${LIB_DIR})
-        target_link_directories(of_static
-                PUBLIC
-                $<BUILD_INTERFACE:${OF_DIRECTORY}/libs/${LIB}/lib/vs/${WIN_ARCH}>
-                $<INSTALL_INTERFACE:lib>
-        )
-        #        message("$<INSTALL_INTERFACE:vs/lib/${LIB}")
-    endforeach ()
-    #    target_link_directories(of_static
-    #            INTERFACE
-    #            $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/curl/lib/vs/x64>
-    #            $<INSTALL_INTERFACE:lib>    # <-- tells consumers to use install tree
-    #    )
-    #    target_link_directories(of_static PUBLIC ${OF_LIB_DIRS})
-    #    message("KAJSHKJHSKJ --- ${OF_LIB_FILES}")
-    target_link_libraries(of_static PUBLIC ${OF_LIB_FILES})
-    #
-    #        message(STATUS "Searching for ${LIB} in ${LIB_DIR}")
-    #
-    #        find_library(found_lib_${LIB} NAMES ${LIB} PATHS ${LIB_DIR} NO_DEFAULT_PATH)
-    #
-    #        if (found_lib)
-    #            message(STATUS "Found: ${found_lib_${LIB}}")
-    #            list(APPEND FOUND_LIBS ${found_lib_${LIB}})
-    #        else ()
-    #            message(WARNING "Library ${LIB} not found in ${LIB_DIR}")
-    #        endif ()
-
-
-    #        set(LIB_DIR ${OF_DIRECTORY}/libs/${LIB}/lib/vs/${WIN_ARCH})
-    #        file(GLOB LIB_FILES "${LIB_DIR}/*.lib")
-    #        list(LENGTH LIB_FILES len)
-    #        if (len GREATER 0)
-    #            of_remove_debug_libs(LIB_FILES_NO_D "${LIB_FILES}")
-    #            target_link_libraries(of_static PUBLIC ${LIB_FILES_NO_D})
-    #        endif ()
-
-    #    endforeach ()
-
-    message(STATUS ${FOUND_LIBS})
     set(OF_WIN_SYSTEM_LIBS msimg32 OpenGL32 kernel32 setupapi Vfw32 comctl32 dsound user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid iphlpapi crypt32 Ws2_32 winmm odbc32 odbccp32 wldap32 mf mfplat mfuuid d3d11 mfreadwrite xaudio2 ucrt)
     target_link_libraries(of_static PUBLIC ${OF_WIN_SYSTEM_LIBS})
 endif ()
@@ -512,6 +439,9 @@ if (OF_TARGET_MACOS)
     target_compile_definitions(of_static PUBLIC __MACOSX_CORE__)
 
 elseif (OF_TARGET_VS)
+    message(STATUS "------ OF TARGET VS")
+    find_package(videoinput CONFIG REQUIRED)
+    target_link_libraries(of_static PRIVATE videoinput::videoinput)
     target_compile_definitions(of_static PUBLIC
             WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB) # GLEW_STATIC
     target_compile_options(of_static PUBLIC
