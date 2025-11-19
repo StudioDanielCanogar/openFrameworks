@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 set(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Debug;Release;")
-set(VCPKG_TARGET_TRIPLET x64-windows-static)
+
+# Use C++20 to fix filesystem API compatibility issues
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #if (CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_SOURCE_DIR)
 project(openFrameworks)
@@ -479,13 +482,20 @@ elseif (OF_TARGET_VS)
     find_package(videoinput CONFIG REQUIRED)
     target_link_libraries(of_static PRIVATE videoinput::videoinput)
     target_compile_definitions(of_static PUBLIC
-            WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB) # GLEW_STATIC
+            WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB
+            NOMINMAX
+            _USE_MATH_DEFINES
+            WIN32_LEAN_AND_MEAN
+            OF_SOUND_PLAYER_MEDIA_FOUNDATION
+    ) # GLEW_STATIC
     target_compile_options(of_static PUBLIC
-            $<$<CONFIG:Debug>:/D _DEBUG /TP /external:W3 /Gy /Gs- /Od /ZI>
-            $<$<CONFIG:Release>:/O2 /W1>
+#            $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
+#            $<$<CONFIG:Release>:/O2 /W1 /MD>
             $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
             $<$<COMPILE_LANGUAGE:C>:/std:c17>
-            /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:__cplusplus /Zc:inline /Zc:wchar_t /fp:precise)
+            /Zc:__cplusplus
+            #            /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:inline /Zc:wchar_t /fp:precise
+    )
     #    target_link_options(of_static PUBLIC /MACHINE:X64 /NOLOGO)
 endif ()
 

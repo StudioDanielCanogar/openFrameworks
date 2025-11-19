@@ -5,14 +5,15 @@
       "name": "vcpkg-release",
       "generator": "Ninja",
       "displayName": "vcpkg Release",
-      "binaryDir": "${sourceDir}/cmake-build-release",
+      "binaryDir": "${sourceDir}/vcpkg-build-release",
       "environment": {
         "VCPKG_ROOT": "thirdParty/vcpkg"
       },
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
         "VCPKG_OVERLAY_PORTS": "${sourceDir}/overlay-ports",
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
     },
     {
@@ -20,9 +21,10 @@
       "displayName": "vcpkg Debug",
       "description": "Debug build using vcpkg",
       "inherits": "vcpkg-release",
-      "binaryDir": "${sourceDir}/cmake-build-debug",
+      "binaryDir": "${sourceDir}/vcpkg-build-debug",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
     }
   ]

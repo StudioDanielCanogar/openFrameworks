@@ -7,6 +7,8 @@
 #        URL "file:///Users/cmendoza/developer/canogar/openFrameworks"
 #        REF HEAD
 #)
+
+
 set(SOURCE_PATH "C:\\Users\\c\\Documents\\developer\\canogar\\openFrameworks")
 
 # Configure

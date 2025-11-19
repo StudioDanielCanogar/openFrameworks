@@ -315,16 +315,17 @@ macro(ofApp APP_NAME SOURCE_FILES)
 
         add_executable(${APP_NAME} "${SOURCE_FILES}")
         target_compile_options(${APP_NAME} PUBLIC
-                $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI>
-                $<$<CONFIG:Release>:/O2 /W1>
+#                $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
+#                $<$<CONFIG:Release>:/O2 /W1>
                 $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
                 $<$<COMPILE_LANGUAGE:C>:/std:c17>
-                /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:__cplusplus /Zc:inline /Zc:wchar_t /fp:precise)
-        #                -U__MINGW64__
-        #                -U__MINGW32__)
-
-        target_compile_definitions(${APP_NAME} PUBLIC
-                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB GLEW_STATIC)
+                /Zc:__cplusplus
+#                /WX- /Zc:forScope /Gd /FC /EHsc /nologo  /Zc:inline /Zc:wchar_t /fp:precise)
+#        #                -U__MINGW64__
+#        #                -U__MINGW32__
+        )
+#        target_compile_definitions(${APP_NAME} PUBLIC
+#                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB)
         if (CMAKE_BUILD_TYPE MATCHES "Debug")
             #            target_link_options(${APP_NAME} PUBLIC
             #                    /DEBUG /NXCOMPAT /DYNAMICBASE /MACHINE:X64 /NODEFAULTLIB:"atlthunk.lib" /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:"libcmt" /NODEFAULTLIB:"LIBC" /NODEFAULTLIB:"LIBCMTD" /INCREMENTAL /SUBSYSTEM:CONSOLE   /ERRORREPORT:PROMPT  /NOLOGO /TLBID:1 /FORCE:MULTIPLE
