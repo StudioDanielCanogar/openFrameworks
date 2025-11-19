@@ -11,16 +11,17 @@ vcpkg_from_github(
 # Source files are in videoInputSrcAndDemos/libs/videoInput
 set(VIDEOINPUT_SRC "${SOURCE_PATH}/videoInputSrcAndDemos/libs/videoInput")
 
-# Install headers to main include directory only
-file(GLOB HEADERS "${VIDEOINPUT_SRC}/*.h")
-file(INSTALL ${HEADERS} DESTINATION "${CURRENT_PACKAGES_DIR}/include/videoinput")
-
 # Create our own CMakeLists.txt (ignore the existing one)
-file(WRITE "${VIDEOINPUT_SRC}/CMakeLists.txt" "
+file(WRITE "${VIDEOINPUT_SRC}/CMakeLists.txt" [=[
 cmake_minimum_required(VERSION 3.10)
 project(videoinput)
 
 add_library(videoinput STATIC videoInput.cpp)
+
+target_include_directories(videoinput PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include/videoinput>
+)
 
 target_link_libraries(videoinput PUBLIC
     strmiids
@@ -28,66 +29,57 @@ target_link_libraries(videoinput PUBLIC
     oleaut32
 )
 
+# Install library
 install(TARGETS videoinput
     EXPORT videoinputTargets
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
 )
+
+# Install headers
+file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES ${HEADERS} DESTINATION include/videoinput)
 
 # Install export targets
 install(EXPORT videoinputTargets
-        FILE videoinputTargets.cmake
-        NAMESPACE videoinput::
-        DESTINATION lib/cmake/videoinput
+    FILE videoinputTargets.cmake
+    NAMESPACE videoinput::
+    DESTINATION lib/cmake/videoinput
 )
+
+# Generate and install config file
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/videoinput-config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/videoinput-config.cmake
+    INSTALL_DESTINATION lib/cmake/videoinput
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/videoinput-config.cmake
+    DESTINATION lib/cmake/videoinput
+)
+]=])
+
+# Create the config.cmake.in file
+file(WRITE "${VIDEOINPUT_SRC}/videoinput-config.cmake.in" "
+@PACKAGE_INIT@
+
+include(\"\${CMAKE_CURRENT_LIST_DIR}/videoinputTargets.cmake\")
+
+check_required_components(videoinput)
 ")
 
 vcpkg_cmake_configure(SOURCE_PATH "${VIDEOINPUT_SRC}")
 vcpkg_cmake_install()
 
+# Fix cmake config location
+vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/videoinput)
 
-# Remove any debug include directory
+# Remove debug include directory
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-# Create the config file manually - this gives us full control
-file(WRITE "${CURRENT_PACKAGES_DIR}/share/videoinput/videoinput-config.cmake"
-        "# videoinput config file
-
-if(TARGET videoinput::videoinput)
-    return()
-endif()
-
-get_filename_component(_videoinput_root \"\${CMAKE_CURRENT_LIST_FILE}\" PATH)
-get_filename_component(_videoinput_root \"\${_videoinput_root}\" PATH)
-get_filename_component(_videoinput_root \"\${_videoinput_root}\" PATH)
-
-add_library(videoinput::videoinput STATIC IMPORTED)
-
-set_target_properties(videoinput::videoinput PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES \"\${_videoinput_root}/include/videoinput\"
-  INTERFACE_LINK_LIBRARIES \"strmiids;ole32;oleaut32\"
-)
-
-# Set the library location for debug
-if(EXISTS \"\${_videoinput_root}/debug/lib/videoinput.lib\")
-  set_property(TARGET videoinput::videoinput APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
-  set_target_properties(videoinput::videoinput PROPERTIES
-    IMPORTED_LOCATION_DEBUG \"\${_videoinput_root}/debug/lib/videoinput.lib\"
-  )
-endif()
-
-# Set the library location for release
-if(EXISTS \"\${_videoinput_root}/lib/videoinput.lib\")
-  set_property(TARGET videoinput::videoinput APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-  set_target_properties(videoinput::videoinput PROPERTIES
-    IMPORTED_LOCATION_RELEASE \"\${_videoinput_root}/lib/videoinput.lib\"
-    IMPORTED_LOCATION \"\${_videoinput_root}/lib/videoinput.lib\"
-  )
-endif()
-
-set(videoinput_FOUND TRUE)
-")
-
-
-# Copyright
-file(WRITE "${CURRENT_PACKAGES_DIR}/share/${PORT}/copyright" "Copyright (c) Theodore Watson - https://github.com/ofTheo/videoInput")
+# Install copyright
+#vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/readme.txt")

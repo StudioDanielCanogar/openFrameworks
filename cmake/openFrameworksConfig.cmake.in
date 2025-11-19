@@ -2,13 +2,49 @@
 
 include(CMakeFindDependencyMacro)
 
-# Find pkg-config first
-find_package(PkgConfig REQUIRED)
 
-# Find pkg-config dependencies
-pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
-pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
-pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+# Platform-specific dependency finding
+if (WIN32)
+    # On Windows, find libraries directly without pkg-config
+    find_library(CAIRO_LIB NAMES cairo REQUIRED)
+    find_library(PIXMAN_LIB NAMES pixman-1 REQUIRED)
+    find_library(LIBUSB_LIB NAMES libusb-1.0 usb-1.0 REQUIRED)
+
+    # Create interface targets for consistency
+    if (NOT TARGET Cairo::Cairo)
+        add_library(Cairo::Cairo INTERFACE IMPORTED)
+        target_link_libraries(Cairo::Cairo INTERFACE ${CAIRO_LIB})
+    endif ()
+
+    if (NOT TARGET Pixman::Pixman)
+        add_library(Pixman::Pixman INTERFACE IMPORTED)
+        target_link_libraries(Pixman::Pixman INTERFACE ${PIXMAN_LIB})
+    endif ()
+
+    if (NOT TARGET libusb::libusb)
+        add_library(libusb::libusb INTERFACE IMPORTED)
+        target_link_libraries(libusb::libusb INTERFACE ${LIBUSB_LIB})
+    endif ()
+else ()
+    # On Unix, use pkg-config
+    find_package(PkgConfig REQUIRED)
+
+    pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+    pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
+    pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+
+    # Create consistent interface targets
+    if (NOT TARGET Cairo::Cairo)
+        add_library(Cairo::Cairo ALIAS PkgConfig::CAIRO)
+    endif ()
+    if (NOT TARGET Pixman::Pixman)
+        add_library(Pixman::Pixman ALIAS PkgConfig::PIXMAN)
+    endif ()
+    if (NOT TARGET libusb::libusb)
+        add_library(libusb::libusb ALIAS PkgConfig::LIBUSB)
+    endif ()
+endif ()
+
 
 # Find all other required dependencies
 find_dependency(fmt CONFIG)
@@ -29,7 +65,7 @@ find_dependency(RtAudio CONFIG)
 find_dependency(uriparser CONFIG)
 find_dependency(utf8cpp CONFIG)
 #if (WIN32)
-    find_dependency(videoinput CONFIG)
+find_dependency(videoinput CONFIG)
 #endif()
 
 

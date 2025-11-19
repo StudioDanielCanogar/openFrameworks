@@ -1,3 +1,5 @@
+#vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+
 #vcpkg_from_git(
 #        OUT_SOURCE_PATH SOURCE_PATH
 ##        URL "https://github.com/StudioDanielCanogar/openFrameworks.git"

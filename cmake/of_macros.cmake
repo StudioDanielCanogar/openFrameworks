@@ -312,7 +312,7 @@ macro(ofApp APP_NAME SOURCE_FILES)
         #        )
 
     elseif (OF_TARGET_VS)
-        #/Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /std:c++20 /Fo"obj\x64\Debug\\Build\src\\Debug\\" /Fd"obj\x64\Debug\vc143.pdb" /external:W3 /Gd /TP /FC /errorReport:prompt /Zc:__cplusplus /Bt /Zc:__cplusplus src\main.cpp src\ofApp.cpp src\App.cpp src\DoubleBufferedBufferObject.cpp src\Model.cpp src\OrbitalCam.cpp src\OrbitDataStorage.cpp src\RDPixelSource.cpp src\RDPixelSourceCam.cpp src\RDPixelSourceUI.cpp src\SatDataModule.cpp (TaskId:51)
+
         add_executable(${APP_NAME} "${SOURCE_FILES}")
         target_compile_options(${APP_NAME} PUBLIC
                 $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI>
@@ -324,11 +324,14 @@ macro(ofApp APP_NAME SOURCE_FILES)
         #                -U__MINGW32__)
 
         target_compile_definitions(${APP_NAME} PUBLIC
-                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB) #GLEW_STATIC
+                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB GLEW_STATIC)
         if (CMAKE_BUILD_TYPE MATCHES "Debug")
-            target_link_options(${APP_NAME} PUBLIC
-                    /DEBUG /NXCOMPAT /DYNAMICBASE /MACHINE:X64 /NODEFAULTLIB:"atlthunk.lib" /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:"libcmt" /NODEFAULTLIB:"LIBC" /NODEFAULTLIB:"LIBCMTD" /INCREMENTAL /SUBSYSTEM:CONSOLE   /ERRORREPORT:PROMPT  /NOLOGO /TLBID:1 /FORCE:MULTIPLE
-                 )
+            #            target_link_options(${APP_NAME} PUBLIC
+            #                    /DEBUG /NXCOMPAT /DYNAMICBASE /MACHINE:X64 /NODEFAULTLIB:"atlthunk.lib" /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:"libcmt" /NODEFAULTLIB:"LIBC" /NODEFAULTLIB:"LIBCMTD" /INCREMENTAL /SUBSYSTEM:CONSOLE   /ERRORREPORT:PROMPT  /NOLOGO /TLBID:1 /FORCE:MULTIPLE
+            #                 )
+#            target_link_options(${APP_NAME} PUBLIC
+#                    /DEBUG /DYNAMICBASE /MACHINE:X64 /INCREMENTAL /SUBSYSTEM:CONSOLE /ERRORREPORT:PROMPT /NOLOGO /FORCE:MULTIPLE
+#            )
         else ()
             target_link_options(${APP_NAME} PUBLIC
                     /DYNAMICBASE:NO

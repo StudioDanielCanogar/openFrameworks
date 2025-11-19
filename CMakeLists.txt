@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:>DLL")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 set(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Debug;Release;")
-
+set(VCPKG_TARGET_TRIPLET x64-windows-static)
 
 #if (CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_SOURCE_DIR)
 project(openFrameworks)
@@ -40,7 +40,7 @@ file(GLOB_RECURSE SRC_GL "${OF_DIRECTORY}/libs/openFrameworks/gl/*.cpp")
 file(GLOB_RECURSE SRC_MATH "${OF_DIRECTORY}/libs/openFrameworks/math/*.cpp")
 set(SRC_SOUND
         ${OF_DIRECTORY}/libs/openFrameworks/sound/ofFmodSoundPlayer.cpp
-#        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofOpenALSoundPlayer.cpp
+        #        ${OF_DIRECTORY}/libs/openFrameworks/sound/ofOpenALSoundPlayer.cpp
         ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundBuffer.cpp
         ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundPlayer.cpp
         ${OF_DIRECTORY}/libs/openFrameworks/sound/ofSoundStream.cpp
@@ -113,10 +113,39 @@ include(CMakePackageConfigHelpers)
 find_package(unofficial-brotli CONFIG REQUIRED)
 find_package(BZip2 REQUIRED)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
-pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
-pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+#pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
+#pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+
+if (WIN32)
+    # On Windows, link directly to the libraries
+    find_library(CAIRO_LIB NAMES cairo REQUIRED)
+    find_library(PIXMAN_LIB NAMES pixman-1 REQUIRED)
+    find_library(LIBUSB_LIB NAMES libusb-1.0 usb-1.0 REQUIRED)
+
+    # Create interface targets for consistency
+    add_library(Cairo::Cairo INTERFACE IMPORTED)
+    target_link_libraries(Cairo::Cairo INTERFACE ${CAIRO_LIB})
+
+    add_library(Pixman::Pixman INTERFACE IMPORTED)
+    target_link_libraries(Pixman::Pixman INTERFACE ${PIXMAN_LIB})
+
+    add_library(libusb::libusb INTERFACE IMPORTED)
+    target_link_libraries(libusb::libusb INTERFACE ${LIBUSB_LIB})
+else ()
+    # On Unix, use pkg-config
+    find_package(PkgConfig REQUIRED)
+
+    pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+    pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
+    pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+
+    # Create consistent interface targets
+    add_library(Cairo::Cairo ALIAS PkgConfig::CAIRO)
+    add_library(Pixman::Pixman ALIAS PkgConfig::PIXMAN)
+    add_library(libusb::libusb ALIAS PkgConfig::LIBUSB)
+endif ()
 
 find_package(CURL REQUIRED)
 find_package(fmt CONFIG REQUIRED)
@@ -147,10 +176,11 @@ find_package(ZLIB REQUIRED)
 target_compile_options(of_static PRIVATE ${cairo_CFLAGS_OTHER} ${libusb_CFLAGS_OTHER})
 
 # Use PkgConfig::CAIRO instead of manual interface
-target_link_libraries(of_static PUBLIC PkgConfig::CAIRO)
-target_link_libraries(of_static PUBLIC PkgConfig::PIXMAN)
-target_link_libraries(of_static PUBLIC PkgConfig::LIBUSB)
-
+if (NOT WIN32)
+    target_link_libraries(of_static PUBLIC PkgConfig::CAIRO)
+    target_link_libraries(of_static PUBLIC PkgConfig::PIXMAN)
+    target_link_libraries(of_static PUBLIC PkgConfig::LIBUSB)
+endif ()
 target_link_libraries(of_static PRIVATE unofficial::brotli::brotlidec)
 target_link_libraries(of_static PRIVATE unofficial::brotli::brotlienc)
 target_link_libraries(of_static PRIVATE unofficial::brotli::brotlicommon)
@@ -162,20 +192,25 @@ target_link_libraries(of_static PRIVATE OpenSSL::Crypto)
 target_link_libraries(of_static PRIVATE CURL::libcurl)
 target_link_libraries(of_static PRIVATE fmt::fmt)
 target_link_libraries(of_static PRIVATE freeimage::FreeImage)
-target_link_libraries(of_static PRIVATE GLEW::glew)
+if (TARGET GLEW::glew_s)
+    target_link_libraries(of_static PUBLIC GLEW::glew_s)
+elseif (TARGET GLEW::GLEW)
+    target_link_libraries(of_static PUBLIC GLEW::GLEW)
+else ()
+    message(FATAL_ERROR "Could not find GLEW target")
+endif ()
 target_link_libraries(of_static PRIVATE glfw)
 target_link_libraries(of_static PRIVATE glm::glm-header-only)
 target_link_libraries(of_static PRIVATE unofficial::libtess2::libtess2)
 target_link_libraries(of_static PRIVATE nlohmann_json::nlohmann_json)
-if (OF_TARGET_MACOS)
+#if (OF_TARGET_MACOS)
     target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
-else ()
-    target_link_libraries(of_static PRIVATE pugixml::shared pugixml::pugixml)
-endif ()
+#else ()
+#    target_link_libraries(of_static PRIVATE pugixml::shared pugixml::pugixml)
+#endif ()
 target_link_libraries(of_static PRIVATE RtAudio::rtaudio)
 target_link_libraries(of_static PRIVATE uriparser::uriparser)
 target_link_libraries(of_static PRIVATE utf8::cpp utf8cpp::utf8cpp)
-
 
 
 # Only override prefix for LOCAL builds, never inside vcpkg
@@ -325,16 +360,16 @@ target_include_directories(of_static PUBLIC
 
 # Add utf8cpp subdirectory to include path manually
 # The package installs to utf8cpp/ but OF expects it at root
-if(TARGET utf8cpp::utf8cpp)
+if (TARGET utf8cpp::utf8cpp)
     get_target_property(UTF8CPP_INCLUDE_DIRS utf8cpp::utf8cpp INTERFACE_INCLUDE_DIRECTORIES)
-    if(UTF8CPP_INCLUDE_DIRS)
-        foreach(dir ${UTF8CPP_INCLUDE_DIRS})
-            if(EXISTS "${dir}/utf8cpp")
+    if (UTF8CPP_INCLUDE_DIRS)
+        foreach (dir ${UTF8CPP_INCLUDE_DIRS})
+            if (EXISTS "${dir}/utf8cpp")
                 target_include_directories(openframeworks PUBLIC ${dir}/utf8cpp)
-            endif()
-        endforeach()
-    endif()
-endif()
+            endif ()
+        endforeach ()
+    endif ()
+endif ()
 
 # Generate config header with paths
 configure_file(
@@ -355,13 +390,13 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ofConfig.h
 # --------------------------------------------------
 
 if (OF_TARGET_MACOS)
-#    foreach (ITEM ${OF_LIB_NAMES})
-#        set(XCF_PATH "${OF_DIRECTORY}/libs/${ITEM}/lib/macos/${ITEM}.xcframework")
-#        # Some libs are include-only, so check if the xcframework exists
-#        if (EXISTS ${XCF_PATH})
-#            target_link_libraries(of_static PUBLIC ${XCF_PATH})
-#        endif ()
-#    endforeach ()
+    #    foreach (ITEM ${OF_LIB_NAMES})
+    #        set(XCF_PATH "${OF_DIRECTORY}/libs/${ITEM}/lib/macos/${ITEM}.xcframework")
+    #        # Some libs are include-only, so check if the xcframework exists
+    #        if (EXISTS ${XCF_PATH})
+    #            target_link_libraries(of_static PUBLIC ${XCF_PATH})
+    #        endif ()
+    #    endforeach ()
 
     find_library(accelerate_lib Accelerate)
     find_library(iokit_lib IOKit)
@@ -412,6 +447,7 @@ if (OF_TARGET_MACOS)
 elseif (OF_TARGET_VS)
 
     set(OF_WIN_SYSTEM_LIBS msimg32 OpenGL32 kernel32 setupapi Vfw32 comctl32 dsound user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid iphlpapi crypt32 Ws2_32 winmm odbc32 odbccp32 wldap32 mf mfplat mfuuid d3d11 mfreadwrite xaudio2 ucrt)
+    target_compile_definitions(of_static PUBLIC GLEW_STATIC)
     target_link_libraries(of_static PUBLIC ${OF_WIN_SYSTEM_LIBS})
 endif ()
 
@@ -450,7 +486,7 @@ elseif (OF_TARGET_VS)
             $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
             $<$<COMPILE_LANGUAGE:C>:/std:c17>
             /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:__cplusplus /Zc:inline /Zc:wchar_t /fp:precise)
-#    target_link_options(of_static PUBLIC /MACHINE:X64 /NOLOGO)
+    #    target_link_options(of_static PUBLIC /MACHINE:X64 /NOLOGO)
 endif ()
 
 
