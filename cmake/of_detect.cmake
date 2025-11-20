@@ -18,7 +18,6 @@ function(ofDetectTarget)
             XROS
     )
 
-    #    return()
     # If TARGET_OS was passed in
     if(DEFINED OF_TARGET_OS)
         string(TOUPPER "${OF_TARGET_OS}" TARGET_OS_UPPER)

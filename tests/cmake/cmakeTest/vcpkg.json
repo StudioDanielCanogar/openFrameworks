@@ -1,0 +1,11 @@
+{
+  "dependencies": [
+    "openframeworks",
+    {
+      "name": "pkgconf",
+      "host": true
+    }
+  ],
+  "version": "1",
+  "name": "eltesto"
+}

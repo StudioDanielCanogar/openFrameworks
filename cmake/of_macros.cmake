@@ -248,15 +248,7 @@ macro(ofApp APP_NAME SOURCE_FILES)
         set(OUTPUT_APP_NAME "${APP_NAME}_debug")
     endif ()
 
-    set(ofIncludeDir "${OF_INSTALL_PREFIX}/include/openFrameworks")
-    file(GLOB children RELATIVE "${ofIncludeDir}" "${ofIncludeDir}/*/")
-    include_directories(${ofIncludeDir})
-    include_directories(${OF_INSTALL_PREFIX}/include)
-    ofGetSubdirNames(subDirs ${ofIncludeDir})
-    ofPrintList(subDirs)
-    foreach (item ${subDirs})
-        include_directories("${ofIncludeDir}/${item}")
-    endforeach ()
+
     if (OF_TARGET_MACOS)
         set(PLIST_TEMPLATE "${OF_DIRECTORY}/cmake/MacOSXBundleInfo.plist.in")
         set(PLIST_OUT "${CMAKE_BINARY_DIR}/MacOSXBundleInfo.plist")
@@ -312,8 +304,8 @@ macro(ofApp APP_NAME SOURCE_FILES)
         #        )
 
     elseif (OF_TARGET_VS)
-
-        add_executable(${APP_NAME} "${SOURCE_FILES}")
+        message(STATUS ${SOURCE_FILES})
+        add_executable(${APP_NAME} ${SOURCE_FILES})
         target_compile_options(${APP_NAME} PUBLIC
 #                $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
 #                $<$<CONFIG:Release>:/O2 /W1>
@@ -327,16 +319,22 @@ macro(ofApp APP_NAME SOURCE_FILES)
 #        target_compile_definitions(${APP_NAME} PUBLIC
 #                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB)
         if (CMAKE_BUILD_TYPE MATCHES "Debug")
-            #            target_link_options(${APP_NAME} PUBLIC
-            #                    /DEBUG /NXCOMPAT /DYNAMICBASE /MACHINE:X64 /NODEFAULTLIB:"atlthunk.lib" /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:"libcmt" /NODEFAULTLIB:"LIBC" /NODEFAULTLIB:"LIBCMTD" /INCREMENTAL /SUBSYSTEM:CONSOLE   /ERRORREPORT:PROMPT  /NOLOGO /TLBID:1 /FORCE:MULTIPLE
-            #                 )
-#            target_link_options(${APP_NAME} PUBLIC
-#                    /DEBUG /DYNAMICBASE /MACHINE:X64 /INCREMENTAL /SUBSYSTEM:CONSOLE /ERRORREPORT:PROMPT /NOLOGO /FORCE:MULTIPLE
-#            )
+            target_link_options(${APP_NAME} PUBLIC
+                    /MACHINE:X64
+                    /NOLOGO
+                    /NODEFAULTLIB:atlthunk.lib
+                    /NODEFAULTLIB:msvcrt
+                    /NODEFAULTLIB:libcmt
+                    /NODEFAULTLIB:LIBC
+                    /NODEFAULTLIB:LIBCMTD)
         else ()
             target_link_options(${APP_NAME} PUBLIC
                     /DYNAMICBASE:NO
-                    /MACHINE:X64 /INCREMENTAL /FORCE:MULTIPLE /SUBSYSTEM:CONSOLE /NOLOGO /TLBID:1)
+                    /MACHINE:X64
+                    /INCREMENTAL
+#                    /FORCE:MULTIPLE
+#                    /SUBSYSTEM:CONSOLE
+                    /NOLOGO)
         endif ()
     endif ()
 
@@ -345,6 +343,9 @@ macro(ofApp APP_NAME SOURCE_FILES)
             RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
             OUTPUT_NAME ${OUTPUT_APP_NAME}
     )
+
+    find_package(openframeworks REQUIRED)
+
     target_link_libraries(${APP_NAME} PRIVATE openframeworks::of_static)
 
 endmacro()

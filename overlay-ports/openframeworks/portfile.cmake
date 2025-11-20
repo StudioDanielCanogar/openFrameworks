@@ -8,7 +8,6 @@
 #        REF HEAD
 #)
 
-
 set(SOURCE_PATH "C:\\Users\\c\\Documents\\developer\\canogar\\openFrameworks")
 
 # Configure
@@ -25,6 +24,7 @@ vcpkg_cmake_configure(
         OPTIONS ${PLATFORM_FLAGS}
 )
 
+
 # Build + install
 vcpkg_cmake_install()
 
@@ -40,13 +40,7 @@ vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/openframeworks)
 vcpkg_fixup_pkgconfig()
 
 # Copy config files to vcpkg-standard location
-#message(STATUS "---------------------PACKAGES DIR: ${CMAKE_INSTALL_PREFIX}")
-
-#file(INSTALL
-#        ${SOURCE_PATH}/gl/shaders
-#        DESTINATION "${CURRENT_PACKAGES_DIR}/share/openframeworks"
-#        FILES_MATCHING PATTERN "*.frag"
-#)
+message(STATUS "---------------------PACKAGES DIR: ${CMAKE_INSTALL_PREFIX}")
 
 # Install license
 #file(INSTALL "${SOURCE_PATH}/LICENSE"

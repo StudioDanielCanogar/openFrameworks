@@ -207,7 +207,7 @@ target_link_libraries(of_static PRIVATE glm::glm-header-only)
 target_link_libraries(of_static PRIVATE unofficial::libtess2::libtess2)
 target_link_libraries(of_static PRIVATE nlohmann_json::nlohmann_json)
 #if (OF_TARGET_MACOS)
-    target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
+target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
 #else ()
 #    target_link_libraries(of_static PRIVATE pugixml::shared pugixml::pugixml)
 #endif ()
@@ -374,7 +374,7 @@ if (TARGET utf8cpp::utf8cpp)
     endif ()
 endif ()
 
-# Generate config header with paths
+# Generate config header with shader paths
 configure_file(
         ${CMAKE_CURRENT_LIST_DIR}/cmake/ofConfig.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/ofConfig.h
@@ -449,9 +449,17 @@ if (OF_TARGET_MACOS)
 
 elseif (OF_TARGET_VS)
 
-    set(OF_WIN_SYSTEM_LIBS msimg32 OpenGL32 kernel32 setupapi Vfw32 comctl32 dsound user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid iphlpapi crypt32 Ws2_32 winmm odbc32 odbccp32 wldap32 mf mfplat mfuuid d3d11 mfreadwrite xaudio2 ucrt)
-    target_compile_definitions(of_static PUBLIC GLEW_STATIC)
-    target_link_libraries(of_static PUBLIC ${OF_WIN_SYSTEM_LIBS})
+    #    set(OF_WIN_SYSTEM_LIBS msimg32 OpenGL32 kernel32 setupapi Vfw32 comctl32 dsound user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid iphlpapi crypt32 Ws2_32 winmm odbc32 odbccp32 wldap32 mf mfplat mfuuid d3d11 mfreadwrite xaudio2 ucrt)
+    #    target_compile_definitions(of_static PUBLIC GLEW_STATIC)
+    find_package(videoinput CONFIG REQUIRED)
+    target_link_libraries(of_static PUBLIC
+            videoinput::videoinput
+            opengl32 gdi32 winmm dxguid ole32 oleaut32
+            uuid strmiids wsock32 ws2_32
+            mfplat mfreadwrite mfuuid
+    )
+
+    #    target_link_libraries(of_static PUBLIC ${OF_WIN_SYSTEM_LIBS})
 endif ()
 
 #target_link_libraries(of_static PUBLIC ${OF_ADDON_FRAMEWORKS} ${OF_CORE_LIBS} ${OF_CORE_FRAMEWORKS})
@@ -463,8 +471,6 @@ endif ()
 # --------------------------------------------------
 # Compilation options
 # --------------------------------------------------
-
-
 if (OF_TARGET_MACOS)
     set_source_files_properties(${OF_SRC} PROPERTIES
             COMPILE_FLAGS "-fobjc-arc")
@@ -479,24 +485,32 @@ if (OF_TARGET_MACOS)
 
 elseif (OF_TARGET_VS)
     message(STATUS "------ OF TARGET VS")
-    find_package(videoinput CONFIG REQUIRED)
-    target_link_libraries(of_static PRIVATE videoinput::videoinput)
+    message(STATUS "Using MSVC version: ${MSVC_VERSION}")
+
     target_compile_definitions(of_static PUBLIC
-            WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB
+#            GLEW_STATIC
             NOMINMAX
             _USE_MATH_DEFINES
             WIN32_LEAN_AND_MEAN
+            UNICODE _UNICODE
             OF_SOUND_PLAYER_MEDIA_FOUNDATION
-    ) # GLEW_STATIC
-    target_compile_options(of_static PUBLIC
-#            $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
-#            $<$<CONFIG:Release>:/O2 /W1 /MD>
-            $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
-            $<$<COMPILE_LANGUAGE:C>:/std:c17>
-            /Zc:__cplusplus
-            #            /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:inline /Zc:wchar_t /fp:precise
+            _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20
+            GLM_FORCE_CTOR_INIT
+#            GLM_ENABLE_EXPERIMENTAL
+            CAIRO_WIN32_STATIC_BUILD
+            FREEIMAGE_LIB
     )
-    #    target_link_options(of_static PUBLIC /MACHINE:X64 /NOLOGO)
+
+    target_compile_options(of_static PUBLIC
+            ##            $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
+            ##            $<$<CONFIG:Release>:/O2 /W1 /MD>
+            ##            $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
+            ##            $<$<COMPILE_LANGUAGE:C>:/std:c17>
+            /Zc:__cplusplus
+            /Zc:wchar_t
+            #            #            /WX- /Zc:forScope /Gd /FC /EHsc /nologo /Zc:inline /fp:precise
+    )
+
 endif ()
 
 
