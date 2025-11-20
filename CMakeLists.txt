@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 project(openframeworks VERSION 0.12.0 LANGUAGES C CXX)
 
+# prefer per-target standard but keep a global fallback for other scripts
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -12,9 +13,17 @@ endif()
 # 1. Collect openFrameworks core sources
 # -------------------------------------------------------
 set(OF_ROOT "${CMAKE_SOURCE_DIR}/libs/openFrameworks")
+message(STATUS "OF_ROOT=${OF_ROOT}")
 
-file(GLOB_RECURSE OF_CORE_SRC ${OF_ROOT}/**/*.cpp ${OF_ROOT}/**/*.c)
-file(GLOB_RECURSE OF_CORE_HEADERS ${OF_ROOT}/**/*.h ${OF_ROOT}/**/*.hpp)
+# Use CONFIGURE_DEPENDS so CMake will re-run when files are added/removed
+file(GLOB_RECURSE OF_CORE_SRC CONFIGURE_DEPENDS
+        "${OF_ROOT}/**/*.cpp"
+        "${OF_ROOT}/**/*.c"
+)
+file(GLOB_RECURSE OF_CORE_HEADERS CONFIGURE_DEPENDS
+        "${OF_ROOT}/**/*.h"
+        "${OF_ROOT}/**/*.hpp"
+)
 
 # Remove platform-specific files
 if(WIN32)
@@ -30,13 +39,31 @@ elseif(UNIX)
     list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofDirectShow.*\\.cpp$")
 endif()
 
+# FMOD was deprecated
 list(FILTER OF_CORE_SRC EXCLUDE REGEX ".*ofFmodSoundPlayer\\.cpp$")
 
 # -------------------------------------------------------
-# 2. Create library (no OBJECT library needed)
+# 2. Create library
 # -------------------------------------------------------
-add_library(openframeworks STATIC ${OF_CORE_SRC} ${OF_CORE_HEADERS})
+# Keep only .c/.cpp in the target sources; register headers as a FILE_SET so IDEs see them
+add_library(openframeworks STATIC ${OF_CORE_SRC})
 
+# Expose headers to IDEs and for install/export (CMake >= 3.23)
+target_sources(
+        openframeworks
+        PUBLIC
+        FILE_SET HEADERS
+        BASE_DIRS ${OF_ROOT}
+        FILES ${OF_CORE_HEADERS}
+)
+
+# Per-target C++ standard and safer defaults
+target_compile_features(openframeworks PUBLIC cxx_std_20)
+set_target_properties(openframeworks PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# -------------------------------------------------------
+# 3. Include directories (BUILD vs INSTALL)
+# -------------------------------------------------------
 target_include_directories(openframeworks PUBLIC
         $<BUILD_INTERFACE:${OF_ROOT}>
         $<BUILD_INTERFACE:${OF_ROOT}/3d>
@@ -54,7 +81,7 @@ target_include_directories(openframeworks PUBLIC
 )
 
 # -------------------------------------------------------
-# 3. Find packages
+# 4. Find packages
 # -------------------------------------------------------
 find_package(unofficial-brotli CONFIG REQUIRED)
 find_package(BZip2 REQUIRED)
@@ -94,11 +121,13 @@ if(TARGET utf8cpp::utf8cpp)
 endif()
 
 # -------------------------------------------------------
-# 4. Link libraries
+# 5. Link libraries
 # -------------------------------------------------------
 # CURL is PRIVATE to avoid export issues
 target_link_libraries(openframeworks PRIVATE CURL::libcurl)
 
+# Many of these are part of the public API of openFrameworks; audit them and switch to PRIVATE when
+# they are only implementation details (reduces propagation to downstream consumers).
 target_link_libraries(openframeworks PUBLIC
         unofficial::brotli::brotlienc
         unofficial::brotli::brotlidec
@@ -110,7 +139,17 @@ target_link_libraries(openframeworks PUBLIC
         freeimage::FreeImage
         Freetype::Freetype
         GLEW::GLEW
-        glfw
+)
+
+# Prefer canonical imported target for glfw if available, fall back to the plain name
+if(TARGET glfw::glfw)
+    target_link_libraries(openframeworks PUBLIC glfw::glfw)
+else()
+    target_link_libraries(openframeworks PUBLIC glfw)
+endif()
+
+# remaining libraries
+target_link_libraries(openframeworks PUBLIC
         glm::glm
         nlohmann_json::nlohmann_json
         unofficial::libtess2::libtess2
@@ -145,13 +184,15 @@ elseif(UNIX)
 endif()
 
 # -------------------------------------------------------
-# 5. Export
+# 6. Export & Install (improved)
 # -------------------------------------------------------
+# Export for use from the build tree
 export(TARGETS openframeworks
         NAMESPACE openframeworks::
         FILE "${CMAKE_CURRENT_BINARY_DIR}/openframeworks-targets.cmake"
 )
 
+# Write a small config file (you already had this; keep it)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/openframeworks-config.cmake" "
 include(CMakeFindDependencyMacro)
 find_dependency(PkgConfig REQUIRED)
@@ -179,5 +220,29 @@ endif()
 include(\"\${CMAKE_CURRENT_LIST_DIR}/openframeworks-targets.cmake\")
 set(openframeworks_FOUND TRUE)
 ")
+
+# Example install rules (adjust PREFIX/DESTDIR as appropriate). These let 'find_package(openframeworks CONFIG)'
+# work for installed packages.
+# Install the library AND install the header file set registered with target_sources(FILE_SET)
+install(TARGETS openframeworks
+        EXPORT openframeworksTargets
+        ARCHIVE DESTINATION lib
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include/openframeworks
+        FILE_SET HEADERS DESTINATION include/openframeworks
+)
+
+# Export the installation
+install(EXPORT openframeworksTargets
+        FILE openframeworks-targets.cmake
+        NAMESPACE openframeworks::
+        DESTINATION lib/cmake/openframeworks
+)
+
+# Install the generated config file
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/openframeworks-config.cmake"
+        DESTINATION lib/cmake/openframeworks
+)
 
 message(STATUS "openFrameworks configured successfully")
