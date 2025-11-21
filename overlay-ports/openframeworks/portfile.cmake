@@ -8,7 +8,7 @@
 #        REF HEAD
 #)
 
-set(SOURCE_PATH "C:\\Users\\c\\Documents\\developer\\canogar\\openFrameworks")
+set(SOURCE_PATH "${CMAKE_CURRENT_LIST_DIR}../../../")
 
 # Configure
 if(VCPKG_TARGET_IS_OSX)
