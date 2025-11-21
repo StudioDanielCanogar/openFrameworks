@@ -11,8 +11,7 @@
       },
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_OVERLAY_PORTS": "$env{OF_DIR}/overlay-ports",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
+        "VCPKG_OVERLAY_PORTS": "$env{OF_DIR}/overlay-ports"
       }
     },
     {
