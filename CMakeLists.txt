@@ -7,18 +7,19 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #if (CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_SOURCE_DIR)
-project(openFrameworks)
 #endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(OF_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+include(of_macros)
+
+project(openFrameworks)
 
 #set(VCPKG_ROOT ${OF_DIRECTORY}/thirdParty/vcpkg)
 #set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 #message(STATUS "------------------------\n${CMAKE_TOOLCHAIN_FILE}")
 
 
-include(of_macros)
 
 # --------------------------------------------------
 # Installation prefix: {OF_DIRECTORY}/install/{platform}
