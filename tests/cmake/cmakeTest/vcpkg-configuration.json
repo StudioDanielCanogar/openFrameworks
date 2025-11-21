@@ -1,5 +1,5 @@
 {
   "overlay-ports": [
-    "../../../../openFrameworks/overlay-ports/openframeworks"
-  ]
+    "../../../../openFrameworks/overlay-ports/"
+    ]
 }

@@ -10,8 +10,8 @@ void ofApp::setup() {
 	#ifndef TARGET_EMSCRIPTEN
 		mesh.setMode(OF_PRIMITIVE_POINTS); // we're going to load a ton of points into an ofMesh
 
-		glEnable(GL_POINT_SMOOTH); // use circular points instead of square points
-		glPointSize(3); // make the points bigger
+		// glEnable(GL_POINT_SMOOTH); // use circular points instead of square points
+		glPointSize(4); // make the points bigger
 
 		// loop through the image in the x and y axes
 		int skip = 3; // load a subset of the points
