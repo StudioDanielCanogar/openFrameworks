@@ -236,7 +236,7 @@ install(TARGETS of_static
         RUNTIME DESTINATION bin
 )
 
-message(STATUS "---------------PREFIX = ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "--INSTALL PREFIX = ${CMAKE_INSTALL_PREFIX}")
 # Install headers - using absolute path with correct case
 install(DIRECTORY "${OF_DIRECTORY}/libs/openFrameworks/"
         DESTINATION include/openFrameworks
@@ -411,7 +411,6 @@ if (OF_TARGET_MACOS)
     find_library(corefoundation_lib CoreFoundation)
     find_library(coreservices_lib CoreServices)
     find_library(opengl_lib OpenGL)
-    # find_library(quicktime_lib QuickTime)
     find_library(corevideo_lib CoreVideo)
     find_library(qtkit_lib QTKit)
     find_library(cocoa_lib Cocoa)
@@ -449,9 +448,6 @@ if (OF_TARGET_MACOS)
     target_link_libraries(of_static PUBLIC ${OF_FRAMEWORKS})
 
 elseif (OF_TARGET_VS)
-
-    #    set(OF_WIN_SYSTEM_LIBS msimg32 OpenGL32 kernel32 setupapi Vfw32 comctl32 dsound user32 gdi32 winspool comdlg32 advapi32 shell32 ole32 oleaut32 uuid iphlpapi crypt32 Ws2_32 winmm odbc32 odbccp32 wldap32 mf mfplat mfuuid d3d11 mfreadwrite xaudio2 ucrt)
-    #    target_compile_definitions(of_static PUBLIC GLEW_STATIC)
     find_package(videoinput CONFIG REQUIRED)
     target_link_libraries(of_static PUBLIC
             videoinput::videoinput
@@ -485,7 +481,6 @@ if (OF_TARGET_MACOS)
     target_compile_definitions(of_static PUBLIC __MACOSX_CORE__)
 
 elseif (OF_TARGET_VS)
-    message(STATUS "------ OF TARGET VS")
     message(STATUS "Using MSVC version: ${MSVC_VERSION}")
 
     target_compile_definitions(of_static PUBLIC

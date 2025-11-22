@@ -40,7 +40,7 @@ vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/openframeworks)
 vcpkg_fixup_pkgconfig()
 
 # Copy config files to vcpkg-standard location
-message(STATUS "---------------------PACKAGES DIR: ${CMAKE_INSTALL_PREFIX}")
+#message(STATUS "--------------------PACKAGES DIR: ${CMAKE_INSTALL_PREFIX}")
 
 # Install license
 #file(INSTALL "${SOURCE_PATH}/LICENSE"

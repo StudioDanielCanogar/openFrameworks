@@ -1,6 +1,6 @@
 {
   "name": "openframeworks",
-  "version-string": "0.12.0-vcpkg",
+  "version-semver": "0.12.0-vcpkg",
   "description": "Modern CMake-based build of openFrameworks",
   "homepage": "https://github.com/StudioDanielCanogar/openFrameworks",
   "dependencies": [
