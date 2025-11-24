@@ -1,5 +1,44 @@
 
+function(ensure_vcpkg_json)
+    set(VCPKG_JSON_PATH "${CMAKE_SOURCE_DIR}/vcpkg.json")
+
+    if(NOT EXISTS "${VCPKG_JSON_PATH}")
+        message(STATUS "vcpkg.json not found — creating one...")
+
+        file(WRITE "${VCPKG_JSON_PATH}"
+                "{\n"
+                "  \"dependencies\": [\n"
+                "    \"openframeworks\"\n"
+                "  ]\n"
+                "}\n"
+        )
+
+        message(STATUS "Created ${VCPKG_JSON_PATH}")
+    else()
+        message(STATUS "vcpkg.json already exists — skipping creation")
+    endif()
+endfunction()
+
+
 function(ofDetectTarget)
+
+    set(VCPKG_JSON_PATH "${CMAKE_SOURCE_DIR}/vcpkg.json")
+
+    if(NOT EXISTS "${VCPKG_JSON_PATH}")
+        message(STATUS "vcpkg.json not found — creating one...")
+
+        file(WRITE "${VCPKG_JSON_PATH}"
+                "{\n"
+                "  \"dependencies\": [\n"
+                "    \"openframeworks\"\n"
+                "  ]\n"
+                "}\n"
+        )
+
+        message(STATUS "Created ${VCPKG_JSON_PATH}")
+    else()
+        message(STATUS "vcpkg.json already exists — skipping creation")
+    endif()
 
     set(supportedTargets
             CATOS
