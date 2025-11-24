@@ -65,3 +65,5 @@ Android.mk
 !/android/*/.cproject
 !/android/*/.project
 !/android/*/.settings
+
+cmake/cmakeTest/vcpkg.json

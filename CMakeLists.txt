@@ -236,7 +236,7 @@ install(TARGETS of_static
         RUNTIME DESTINATION bin
 )
 
-message(STATUS "--INSTALL PREFIX = ${CMAKE_INSTALL_PREFIX}")
+#message(STATUS "--INSTALL PREFIX = ${CMAKE_INSTALL_PREFIX}")
 # Install headers - using absolute path with correct case
 install(DIRECTORY "${OF_DIRECTORY}/libs/openFrameworks/"
         DESTINATION include/openFrameworks
