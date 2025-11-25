@@ -205,3 +205,4 @@ cmake-build-*/
 vcpkg_installed
 thirdParty
 *-build-*
+tests/cmake/cmakeTest/vcpkg.json
