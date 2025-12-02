@@ -23,6 +23,7 @@
     "uriparser",
     "utfcpp",
     "zlib",
+    "sdl3",
     {
       "name": "videoinput",
       "platform": "windows"

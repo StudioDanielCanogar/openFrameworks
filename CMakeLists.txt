@@ -14,6 +14,9 @@ set(OF_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 include(of_macros)
 
 project(openFrameworks)
+#
+#set(SDL_HIDAPI_LIBUSB_SHARED GLOBAL CACHE BOOL OFF FORCE)
+#add_subdirectory(thirdParty/SDL)
 
 #set(VCPKG_ROOT ${OF_DIRECTORY}/thirdParty/vcpkg)
 #set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
@@ -57,7 +60,9 @@ set(SRC_VIDEO
         ${OF_DIRECTORY}/libs/openFrameworks/video/ofVideoPlayer.cpp
 )
 
-set(OF_SRC)
+set(OF_SRC
+        libs/openFrameworks/app/ofAppSDLWindow.cpp
+        libs/openFrameworks/app/ofAppSDLWindow.h)
 
 list(APPEND OF_SRC
         ${SRC_3D}
@@ -167,6 +172,7 @@ find_package(uriparser CONFIG REQUIRED)
 find_package(utf8cpp CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 
+find_package(SDL3 CONFIG REQUIRED)
 
 ## Propagate include dirs for pkg-config-only deps
 #if (cairo_FOUND)
@@ -215,7 +221,7 @@ target_link_libraries(of_static PRIVATE pugixml::static pugixml::pugixml)
 target_link_libraries(of_static PRIVATE RtAudio::rtaudio)
 target_link_libraries(of_static PRIVATE uriparser::uriparser)
 target_link_libraries(of_static PRIVATE utf8::cpp utf8cpp::utf8cpp)
-
+target_link_libraries(of_static PRIVATE SDL3::SDL3)
 
 # Only override prefix for LOCAL builds, never inside vcpkg
 # vcpkg sets CMAKE_INSTALL_PREFIX itself, so don't override it
@@ -404,7 +410,7 @@ if (OF_TARGET_MACOS)
 
     find_library(accelerate_lib Accelerate)
     find_library(iokit_lib IOKit)
-    find_library(agl_lib AGL)
+#    find_library(agl_lib AGL)
     find_library(applicationservices_lib ApplicationServices)
     find_library(audiotoolbox_lib AudioToolbox)
     find_library(coreaudio_lib CoreAudio)
@@ -425,7 +431,7 @@ if (OF_TARGET_MACOS)
     set(OF_FRAMEWORKS
             ${accelerate_lib}
             ${iokit_lib}
-            ${agl_lib}
+#            ${agl_lib}
             ${applicationservices_lib}
             ${audiotoolbox_lib}
             ${coreaudio_lib}

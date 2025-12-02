@@ -36,6 +36,7 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
 # Fix up CMake config files location
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/openframeworks)
 
+
 # Fix .pc files if needed
 vcpkg_fixup_pkgconfig()
 

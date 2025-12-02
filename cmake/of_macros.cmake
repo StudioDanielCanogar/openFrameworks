@@ -344,6 +344,9 @@ macro(ofApp APP_NAME SOURCE_FILES)
             OUTPUT_NAME ${OUTPUT_APP_NAME}
     )
 
+    # CMake doesn't find SDL in the consumer unless we call find_package here
+    find_package(SDL3 CONFIG REQUIRED)
+
     find_package(openframeworks REQUIRED)
 
     target_link_libraries(${APP_NAME} PRIVATE openframeworks::of_static)
