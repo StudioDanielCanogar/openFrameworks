@@ -404,7 +404,7 @@ if (OF_TARGET_MACOS)
 
     find_library(accelerate_lib Accelerate)
     find_library(iokit_lib IOKit)
-    find_library(agl_lib AGL)
+#    find_library(agl_lib AGL)
     find_library(applicationservices_lib ApplicationServices)
     find_library(audiotoolbox_lib AudioToolbox)
     find_library(coreaudio_lib CoreAudio)
