@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.28)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 # Set the location of the openFrameworks directory:
 # Make it absolute:
 get_filename_component(OF_DIRECTORY ../../../../openFrameworks REALPATH)
 message("OF DIRECTORY: ${OF_DIRECTORY}")
 
-# Include the main CMakeLists, this adds OF as a target and includes the helper macros
+# Include the main CMakeLists, this adds OF as a target and includes the helper macros.
+# This needs to be included BEFORE the project() declaration.
 include(${OF_DIRECTORY}/cmake/of_macros.cmake)
 
 project(cmakeTest)
