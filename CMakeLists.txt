@@ -23,7 +23,6 @@ project(openFrameworks)
 #message(STATUS "------------------------\n${CMAKE_TOOLCHAIN_FILE}")
 
 
-
 # --------------------------------------------------
 # Installation prefix: {OF_DIRECTORY}/install/{platform}
 # --------------------------------------------------
@@ -34,6 +33,7 @@ project(openFrameworks)
 
 file(GLOB_RECURSE SRC_3D "${OF_DIRECTORY}/libs/openFrameworks/3d/*.cpp")
 set(SRC_APP
+        ${OF_DIRECTORY}/libs/openFrameworks/app/ofAppSDLWindow.cpp
         ${OF_DIRECTORY}/libs/openFrameworks/app/ofAppGLFWWindow.cpp
         ${OF_DIRECTORY}/libs/openFrameworks/app/ofBaseApp.cpp
         ${OF_DIRECTORY}/libs/openFrameworks/app/ofAppNoWindow.cpp
@@ -150,6 +150,17 @@ else ()
     pkg_check_modules(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
     pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
+    if (NOT APPLE)
+        # GStreamer (video backend Linux)
+        pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+        target_include_directories(of_static PRIVATE ${GSTREAMER_INCLUDE_DIRS})
+        target_link_libraries(of_static PRIVATE ${GSTREAMER_LIBRARIES})
+
+        # KISSFFT (per ofOpenALSoundPlayer / FFT)
+        pkg_check_modules(KISSFFT REQUIRED kissfft-float)
+        target_include_directories(of_static PRIVATE ${KISSFFT_INCLUDE_DIRS})
+        target_link_libraries(of_static PRIVATE ${KISSFFT_LIBRARIES})
+    endif ()
     # Create consistent interface targets
     add_library(Cairo::Cairo ALIAS PkgConfig::CAIRO)
     add_library(Pixman::Pixman ALIAS PkgConfig::PIXMAN)
@@ -263,7 +274,7 @@ install(EXPORT openframeworksTargets
 
 # Generate and install config files
 configure_package_config_file(
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/openframeworksConfig.cmake.in
+        ${CMAKE_CURRENT_LIST_DIR}/cmake/openFrameworksConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/openframeworksConfig.cmake
         INSTALL_DESTINATION lib/cmake/openframeworks
 )
@@ -410,7 +421,7 @@ if (OF_TARGET_MACOS)
 
     find_library(accelerate_lib Accelerate)
     find_library(iokit_lib IOKit)
-#    find_library(agl_lib AGL)
+    #    find_library(agl_lib AGL)
     find_library(applicationservices_lib ApplicationServices)
     find_library(audiotoolbox_lib AudioToolbox)
     find_library(coreaudio_lib CoreAudio)
@@ -490,7 +501,7 @@ elseif (OF_TARGET_VS)
     message(STATUS "Using MSVC version: ${MSVC_VERSION}")
 
     target_compile_definitions(of_static PUBLIC
-#            GLEW_STATIC
+            #            GLEW_STATIC
             NOMINMAX
             _USE_MATH_DEFINES
             WIN32_LEAN_AND_MEAN
@@ -498,7 +509,7 @@ elseif (OF_TARGET_VS)
             OF_SOUND_PLAYER_MEDIA_FOUNDATION
             _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20
             GLM_FORCE_CTOR_INIT
-#            GLM_ENABLE_EXPERIMENTAL
+            #            GLM_ENABLE_EXPERIMENTAL
             CAIRO_WIN32_STATIC_BUILD
             FREEIMAGE_LIB
     )

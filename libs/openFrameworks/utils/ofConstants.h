@@ -207,6 +207,7 @@ enum ofTargetPlatform{
 
 #if defined(TARGET_OS_OSX) && !defined(TARGET_OF_IOS)
     #define TARGET_GLFW_WINDOW
+	#define TARGET_SDL_WINDOW
     #define OF_CAIRO
     #define OF_RTAUDIO
 	#ifndef __MACOSX_CORE__

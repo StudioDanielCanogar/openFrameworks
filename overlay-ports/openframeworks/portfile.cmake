@@ -4,14 +4,12 @@
 #        OUT_SOURCE_PATH SOURCE_PATH
 ##        URL "https://github.com/StudioDanielCanogar/openFrameworks.git"
 #        #        REF 6d9fb309d446addf2f433d5ec7262cd25daac438 FETCH_REF vcpkg
-#        URL "file:///Users/cmendoza/developer/canogar/openFrameworks"
 #        REF HEAD
 #)
 
 set(SOURCE_PATH "${CMAKE_CURRENT_LIST_DIR}../../../")
 
 # Configure
-
 
 if(VCPKG_TARGET_IS_OSX)
     list(APPEND PLATFORM_FLAGS -DOF_TARGET_MACOS=ON)
