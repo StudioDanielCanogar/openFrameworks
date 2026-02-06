@@ -126,6 +126,9 @@ private:
 
     ofBaseApp * ofAppPtr = nullptr;
     ofOrientation orientation = OF_ORIENTATION_DEFAULT;
+
+    // single active instance used by static callbacks like pollEvents
+    static ofAppSDLWindow * currentWindowInstance;
 };
 
 #endif // TARGET_SDL_WINDOW

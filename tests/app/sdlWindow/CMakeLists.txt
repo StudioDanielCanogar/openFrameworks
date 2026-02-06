@@ -10,6 +10,7 @@ message("OF DIRECTORY: ${OF_DIRECTORY}")
 include(${OF_DIRECTORY}/cmake/of_macros.cmake)
 
 project(sdlWindow)
+add_subdirectory(${OF_DIRECTORY} "of_src" EXCLUDE_FROM_ALL)
 
 # Collect sources from src folder
 file(GLOB_RECURSE APP_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
@@ -21,5 +22,4 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_SDL_WINDOW)
 # Include src directory
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
-#add_subdirectory(${OF_DIRECTORY}/libs/openFrameworks "of_src" EXCLUDE_FROM_ALL)
 

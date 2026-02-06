@@ -10,7 +10,8 @@ int main( ){
 	ofGLWindowSettings settings;
 	settings.setSize(1024, 768);
 	settings.windowMode = OF_WINDOW; //can also be OF_FULLSCREEN
-
+	settings.glVersionMajor = 4;
+	settings.glVersionMinor = 1;
 	ofInit();
 	auto w = std::make_shared<ofAppSDLWindow>()	;
 	ofGetMainLoop()->addWindow(w);
