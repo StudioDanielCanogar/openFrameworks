@@ -63,7 +63,7 @@ function(ofIncludeAddon addonName)
         ofGetSubdirNames(libs_subdirs ${PATH_LIBS})
         list(LENGTH addonSrc list_length)
         if (list_length EQUAL 0)
-            #            message("List is empty")
+            message(STATUS "Addon ${addonName} has no source files in ${PATH_SRC}")
         else ()
             ### So creating a separate lib for each addon currently poses problems, so I am
             ### disabling this. Maybe per-addon compile flags could help.
@@ -307,17 +307,17 @@ macro(ofApp APP_NAME SOURCE_FILES)
         message(STATUS ${SOURCE_FILES})
         add_executable(${APP_NAME} ${SOURCE_FILES})
         target_compile_options(${APP_NAME} PUBLIC
-#                $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
-#                $<$<CONFIG:Release>:/O2 /W1>
+                #                $<$<CONFIG:Debug>:/D _DEBUG /TP /Gy /Gs- /Od /ZI /MDd>
+                #                $<$<CONFIG:Release>:/O2 /W1>
                 $<$<COMPILE_LANGUAGE:CXX>:/std:c++20>
                 $<$<COMPILE_LANGUAGE:C>:/std:c17>
                 /Zc:__cplusplus
-#                /WX- /Zc:forScope /Gd /FC /EHsc /nologo  /Zc:inline /Zc:wchar_t /fp:precise)
-#        #                -U__MINGW64__
-#        #                -U__MINGW32__
+                #                /WX- /Zc:forScope /Gd /FC /EHsc /nologo  /Zc:inline /Zc:wchar_t /fp:precise)
+                #        #                -U__MINGW64__
+                #        #                -U__MINGW32__
         )
-#        target_compile_definitions(${APP_NAME} PUBLIC
-#                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB)
+        #        target_compile_definitions(${APP_NAME} PUBLIC
+        #                WIN32 CURL_STATICLIB URI_STATIC_BUILD _HAS_STREAM_INSERTION_OPERATORS_DELETED_IN_CXX20 _CONSOLE POCO_STATIC CAIRO_WIN32_STATIC_BUILD DISABLE_SOME_FLOATING_POINT OF_NO_FMOD GLM_FORCE_CTOR_INIT GLM_ENABLE_EXPERIMENTAL _UNICODE UNICODE FREEIMAGE_LIB)
         if (CMAKE_BUILD_TYPE MATCHES "Debug")
             target_link_options(${APP_NAME} PUBLIC
                     /MACHINE:X64
@@ -332,10 +332,11 @@ macro(ofApp APP_NAME SOURCE_FILES)
                     /DYNAMICBASE:NO
                     /MACHINE:X64
                     /INCREMENTAL
-#                    /FORCE:MULTIPLE
-#                    /SUBSYSTEM:CONSOLE
+                    #                    /FORCE:MULTIPLE
+                    #                    /SUBSYSTEM:CONSOLE
                     /NOLOGO)
         endif ()
+        target_sources(${APP_NAME} PUBLIC app.rc)
     endif ()
 
     set_target_properties(${APP_NAME}

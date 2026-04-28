@@ -2,7 +2,7 @@
 function(ensure_vcpkg_json)
     set(VCPKG_JSON_PATH "${CMAKE_SOURCE_DIR}/vcpkg.json")
 
-    if(NOT EXISTS "${VCPKG_JSON_PATH}")
+    if (NOT EXISTS "${VCPKG_JSON_PATH}")
         message(STATUS "vcpkg.json not found — creating one...")
 
         file(WRITE "${VCPKG_JSON_PATH}"
@@ -14,9 +14,65 @@ function(ensure_vcpkg_json)
         )
 
         message(STATUS "Created ${VCPKG_JSON_PATH}")
-    else()
+    else ()
         message(STATUS "vcpkg.json already exists — skipping creation")
-    endif()
+    endif ()
+endfunction()
+
+function(ensureAppRC)
+    if (NOT OF_TARGET_VS)
+        message(STATUS "Not a Windows target — skipping app.rc setup")
+        return()
+    endif ()
+    set(APP_RC_PATH "${CMAKE_SOURCE_DIR}/app.rc")
+    if (NOT EXISTS "${APP_RC_PATH}")
+        message(STATUS "app.rc not found — creating one...")
+
+        file(WRITE "${APP_RC_PATH}" [=[
+#include <windows.h>
+
+IDI_APP_ICON ICON "app_icon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "Studio Daniel Canogar\0"
+//            VALUE "FileDescription", "My Application\0"
+//            VALUE "FileVersion", "1.0.0.0\0"
+//           VALUE "ProductName", "MyApp\0"
+//           VALUE "ProductVersion", "1.0.0.0\0"
+        END
+    END
+END
+]=]
+        )
+
+        message(STATUS "Created ${APP_RC_PATH}")
+    else ()
+        message(STATUS "app.rc already exists — skipping creation")
+    endif ()
+
+    message(STATUS "${CMAKE_SOURCE_DIR}/app.ico")
+    if (EXISTS ${CMAKE_SOURCE_DIR}/app.ico)
+        message(STATUS "app.ico already exists — skipping copy")
+    else ()
+        message(STATUS "app.ico not found — copying default icon...")
+        configure_file(
+                "${OF_DIRECTORY}/libs/openFrameworksCompiled/project/vs/icon.ico"
+                "${CMAKE_SOURCE_DIR}/app.ico"
+                COPYONLY
+        )
+    endif ()
 endfunction()
 
 
@@ -24,7 +80,7 @@ function(ofDetectTarget)
 
     set(VCPKG_JSON_PATH "${CMAKE_SOURCE_DIR}/vcpkg.json")
 
-    if(NOT EXISTS "${VCPKG_JSON_PATH}")
+    if (NOT EXISTS "${VCPKG_JSON_PATH}")
         message(STATUS "vcpkg.json not found — creating one...")
 
         file(WRITE "${VCPKG_JSON_PATH}"
@@ -36,9 +92,10 @@ function(ofDetectTarget)
         )
 
         message(STATUS "Created ${VCPKG_JSON_PATH}")
-    else()
+    else ()
         message(STATUS "vcpkg.json already exists — skipping creation")
-    endif()
+    endif ()
+
 
     set(supportedTargets
             CATOS
@@ -95,6 +152,8 @@ function(ofDetectTarget)
         endif ()
     endif ()
 
+    ensureAppRC()
+
     set(VCPKG_ROOT ${OF_DIRECTORY}/thirdParty/vcpkg CACHE STRING "" FORCE)
     set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
     set(VCPKG_OVERLAY_PORTS ${OF_DIRECTORY}/overlay-ports/ CACHE STRING "")
@@ -105,6 +164,7 @@ function(ofDetectTarget)
             set(VCPKG_CRT_LINKAGE "dynamic")
             set(VCPKG_LIBRARY_LINKAGE "static")
             set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
+            set(VCPKG_PLATFORM_TOOLSET "v143" CACHE STRING "" FORCE)
         elseif (APPLE)
             #                if (ARCH MATCHES "arm64|aarch64")
             #                    set(VCPKG_TARGET_TRIPLET "arm64-osx" CACHE STRING "")
